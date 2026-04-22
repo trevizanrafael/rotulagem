@@ -43,14 +43,16 @@ const init = async () => {
     await sequelize.sync({ alter: true });
     console.log('✅ Tabelas sincronizadas');
 
-    // Gera o hash da senha do admin a partir do .env e guarda em memória
+    // Carrega credenciais do admin a partir do .env e guarda em memória
+    const adminUsername = process.env.ADMIN_USERNAME;
     const adminPassword = process.env.ADMIN_PASSWORD;
-    if (!adminPassword) {
-      throw new Error('❌ ADMIN_PASSWORD não definida no .env');
+    if (!adminUsername || !adminPassword) {
+      throw new Error('❌ ADMIN_USERNAME ou ADMIN_PASSWORD não definidos no .env');
     }
     const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
+    app.locals.adminUsername = adminUsername;
     app.locals.adminPasswordHash = adminPasswordHash;
-    console.log('✅ Senha do admin carregada');
+    console.log('✅ Credenciais do admin carregadas');
 
     // Sobe o servidor
     app.listen(PORT, () => {

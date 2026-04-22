@@ -11,12 +11,13 @@ const getLogin = (req, res) => {
 
 // POST /admin/login - Processa login do admin
 const postLogin = async (req, res) => {
-  const { password } = req.body;
+  const { username, password } = req.body;
 
-  const isValid = await bcrypt.compare(password, req.app.locals.adminPasswordHash);
+  const usernameCorreto = username === req.app.locals.adminUsername;
+  const senhaCorreta = await bcrypt.compare(password, req.app.locals.adminPasswordHash);
 
-  if (!isValid) {
-    return res.redirect('/admin/login?error=senha_incorreta');
+  if (!usernameCorreto || !senhaCorreta) {
+    return res.redirect('/admin/login?error=credenciais_invalidas');
   }
 
   req.session.isAdmin = true;
