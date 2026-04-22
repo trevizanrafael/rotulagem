@@ -7,6 +7,14 @@
 <body>
   <h1>Login</h1>
 
+  <% if (erro === 'usuario_nao_encontrado') { %>
+    <p style="color:red;">Usuário não encontrado.</p>
+  <% } else if (erro === 'senha_incorreta') { %>
+    <p style="color:red;">Senha incorreta.</p>
+  <% } else if (erro === 'erro_interno') { %>
+    <p style="color:red;">Erro interno. Tente novamente.</p>
+  <% } %>
+
   <form action="/login" method="POST">
     <div>
       <label for="username">Usuário:</label>
@@ -18,20 +26,5 @@
     </div>
     <button type="submit">Entrar</button>
   </form>
-
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const mensagens = {
-      usuario_nao_encontrado: 'Usuário não encontrado.',
-      senha_incorreta: 'Senha incorreta.',
-      erro_interno: 'Erro interno. Tente novamente.',
-    };
-    const erro = params.get('error');
-    if (erro && mensagens[erro]) {
-      const p = document.createElement('p');
-      p.textContent = mensagens[erro];
-      document.body.appendChild(p);
-    }
-  </script>
 </body>
 </html>

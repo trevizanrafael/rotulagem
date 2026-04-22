@@ -1,4 +1,3 @@
-const path = require('path');
 const User = require('../models/User');
 
 // GET /login - Exibe página de login do usuário
@@ -6,7 +5,8 @@ const getLogin = (req, res) => {
   if (req.session.userId) {
     return res.redirect('/home');
   }
-  res.sendFile(path.join(__dirname, '../views/user/login.html'));
+  const erro = req.query.error || null;
+  res.render('user/login', { erro });
 };
 
 // POST /login - Processa login do usuário
@@ -40,7 +40,7 @@ const getHome = (req, res) => {
   if (!req.session.userId) {
     return res.redirect('/login');
   }
-  res.sendFile(path.join(__dirname, '../views/user/home.html'));
+  res.render('user/home', { username: req.session.username });
 };
 
 // POST /logout - Encerra sessão do usuário

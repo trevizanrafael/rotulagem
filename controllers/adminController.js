@@ -1,12 +1,13 @@
 const bcrypt = require('bcryptjs');
-const path = require('path');
+const User = require('../models/User');
 
 // GET /admin/login - Exibe página de login do admin
 const getLogin = (req, res) => {
   if (req.session.isAdmin) {
     return res.redirect('/admin/dashboard');
   }
-  res.sendFile(path.join(__dirname, '../views/admin/login.html'));
+  const erro = req.query.error || null;
+  res.render('admin/login', { erro });
 };
 
 // POST /admin/login - Processa login do admin
@@ -29,15 +30,29 @@ const getDashboard = (req, res) => {
   if (!req.session.isAdmin) {
     return res.redirect('/admin/login');
   }
-  res.sendFile(path.join(__dirname, '../views/admin/dashboard.html'));
+  res.render('admin/dashboard');
 };
 
-// GET /admin/usuarios - Página de cadastro de usuários
-const getUsuarios = (req, res) => {
+// GET /admin/usuarios - Lista e cadastro de usuários
+const getUsuarios = async (req, res) => {
   if (!req.session.isAdmin) {
     return res.redirect('/admin/login');
   }
-  res.sendFile(path.join(__dirname, '../views/admin/usuarios.html'));
+
+  try {
+    const usuarios = await User.findAll({
+      attributes: ['id', 'username', 'createdAt', 'updatedAt'],
+      order: [['createdAt', 'DESC']],
+    });
+
+    const sucesso = req.query.success || null;
+    const erro = req.query.error || null;
+
+    res.render('admin/usuarios', { usuarios, sucesso, erro });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/admin/dashboard?error=erro_interno');
+  }
 };
 
 // POST /admin/usuarios - Cria novo usuário
@@ -47,7 +62,6 @@ const postUsuario = async (req, res) => {
   }
 
   const { username, password } = req.body;
-  const User = require('../models/User');
 
   try {
     await User.create({ username, password });

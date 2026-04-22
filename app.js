@@ -11,6 +11,10 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Template engine
+app.set('view engine', 'ejs');
+app.set('views', './views');
+
 // Middleware de parsing
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

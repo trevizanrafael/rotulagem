@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Usuários - Admin</title>
+</head>
+<body>
+  <div style="display: flex; gap: 2rem;">
+
+    <!-- Menu lateral -->
+    <nav>
+      <ul>
+        <li><a href="/admin/usuarios">Usuários</a></li>
+      </ul>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main>
+      <h1>Usuários Cadastrados</h1>
+
+      <!-- Formulário de cadastro -->
+      <h2>Novo Usuário</h2>
+
+      <% if (sucesso === 'usuario_criado') { %>
+        <p style="color:green;">Usuário cadastrado com sucesso!</p>
+      <% } %>
+      <% if (erro === 'usuario_ja_existe') { %>
+        <p style="color:red;">Erro: esse nome de usuário já existe.</p>
+      <% } else if (erro === 'erro_interno') { %>
+        <p style="color:red;">Erro interno. Tente novamente.</p>
+      <% } %>
+
+      <form action="/admin/usuarios" method="POST">
+        <div>
+          <label for="username">Usuário:</label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+          <label for="password">Senha:</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Cadastrar</button>
+      </form>
+
+      <hr>
+
+      <!-- Tabela de usuários -->
+      <h2>Todos os Usuários (<%= usuarios.length %>)</h2>
+
+      <% if (usuarios.length === 0) { %>
+        <p>Nenhum usuário cadastrado ainda.</p>
+      <% } else { %>
+        <table border="1" cellpadding="6" cellspacing="0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuário</th>
+              <th>Criado em</th>
+              <th>Atualizado em</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% usuarios.forEach(function(u) { %>
+              <tr>
+                <td><%= u.id %></td>
+                <td><%= u.username %></td>
+                <td><%= new Date(u.createdAt).toLocaleString('pt-BR') %></td>
+                <td><%= new Date(u.updatedAt).toLocaleString('pt-BR') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+
+      <br>
+      <a href="/admin/dashboard">← Voltar ao painel</a>
+
+      <form action="/admin/logout" method="POST" style="margin-top: 1rem;">
+        <button type="submit">Sair</button>
+      </form>
+    </main>
+
+  </div>
+</body>
+</html>
