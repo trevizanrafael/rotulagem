@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Admin</title>
+</head>
+<body>
+  <h1>Login Administrador</h1>
+
+  <form action="/admin/login" method="POST">
+    <label for="password">Senha:</label>
+    <input type="password" id="password" name="password" required>
+    <button type="submit">Entrar</button>
+  </form>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error') === 'senha_incorreta') {
+      const p = document.createElement('p');
+      p.textContent = 'Senha incorreta. Tente novamente.';
+      document.body.appendChild(p);
+    }
+  </script>
+</body>
+</html>
