@@ -1,30 +1,55 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Login</title>
+  <%- include('../partials/_head') %>
+    <title>Login — FoodTech</title>
 </head>
+
 <body>
-  <h1>Login</h1>
 
-  <% if (erro === 'usuario_nao_encontrado') { %>
-    <p style="color:red;">Usuário não encontrado.</p>
-  <% } else if (erro === 'senha_incorreta') { %>
-    <p style="color:red;">Senha incorreta.</p>
-  <% } else if (erro === 'erro_interno') { %>
-    <p style="color:red;">Erro interno. Tente novamente.</p>
-  <% } %>
+  <div class="login-root">
 
-  <form action="/login" method="POST">
-    <div>
-      <label for="username">Usuário:</label>
-      <input type="text" id="username" name="username" required>
+    <!-- Painel esquerdo: identidade -->
+    <div class="login-brand">
+      <img class="login-brand-logo" src="/icons/logo.png" alt="">
+      <h1>Auditoria de Rótulos Lácteos</h1>
+      <p>Acesse sua conta para iniciar auditorias, preencher checklists e gerar relatórios de conformidade.</p>
+      <p class="login-brand-tagline">FoodTech Consultoria · Área do Usuário</p>
     </div>
-    <div>
-      <label for="password">Senha:</label>
-      <input type="password" id="password" name="password" required>
+
+    <!-- Painel direito: formulário -->
+    <div class="login-panel">
+      <div class="login-box fade-up">
+        <h2>Entrar na plataforma</h2>
+        <p class="login-subtitle">Use as credenciais fornecidas pelo administrador.</p>
+
+        <% if (erro==='usuario_nao_encontrado' ) { %>
+          <div class="alert alert-error">⚠️ Usuário não encontrado.</div>
+          <% } else if (erro==='senha_incorreta' ) { %>
+            <div class="alert alert-error">⚠️ Senha incorreta. Tente novamente.</div>
+            <% } else if (erro==='erro_interno' ) { %>
+              <div class="alert alert-error">⚠️ Erro interno. Tente novamente mais tarde.</div>
+              <% } %>
+
+                <form action="/login" method="POST">
+                  <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" name="username" placeholder="ex: joao.silva" required autofocus>
+                  </div>
+                  <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-primary-full" style="margin-top:.5rem;">
+                    Entrar
+                  </button>
+                </form>
+      </div>
     </div>
-    <button type="submit">Entrar</button>
-  </form>
+
+  </div>
+
 </body>
+
 </html>

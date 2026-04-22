@@ -1,0 +1,701 @@
+/* ============================================================
+   FoodTech — Design System
+   Paleta: #036ec0 (azul) / #fefefe (branco)
+   Layout inspirado em interfaces de gestão modernas
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ── Reset & Base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --blue:          #036ec0;
+  --blue-dark:     #025aa0;
+  --blue-deeper:   #01447c;
+  --blue-header:   #013f70;
+  --blue-light:    #e6f2fb;
+  --blue-mid:      #cce4f6;
+  --white:         #fefefe;
+  --bg:            #f0f4f8;
+  --surface:       #ffffff;
+  --border:        #dde3ea;
+  --text:          #1a2332;
+  --text-muted:    #5f6d7e;
+  --text-light:    #94a3b8;
+  --success:       #16a34a;
+  --success-bg:    #f0fdf4;
+  --danger:        #dc2626;
+  --danger-bg:     #fef2f2;
+  --sidebar-w:     240px;
+  --header-h:      56px;
+  --radius:        8px;
+  --radius-lg:     14px;
+  --shadow-sm:     0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow:        0 4px 12px rgba(3,110,192,.10), 0 1px 3px rgba(0,0,0,.06);
+  --shadow-lg:     0 8px 30px rgba(3,110,192,.15);
+  --transition:    0.18s ease;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ============================================================
+   PÁGINAS DE LOGIN
+   Split: esquerda = brand | direita = formulário
+   ============================================================ */
+
+.login-root {
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Painel esquerdo — identidade visual */
+.login-brand {
+  flex: 0 0 420px;
+  background: linear-gradient(155deg, #012e54 0%, var(--blue-header) 55%, var(--blue-deeper) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 3.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-brand::before {
+  content: '';
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  top: -100px;
+  right: -120px;
+}
+
+.login-brand::after {
+  content: '';
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  bottom: -60px;
+  left: -80px;
+}
+
+.login-brand-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin-bottom: 2rem;
+}
+
+.login-brand-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba(255,255,255,.18);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  font-size: 1.75rem;
+}
+
+.login-brand h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: .75rem;
+  letter-spacing: -.4px;
+}
+
+.login-brand p {
+  font-size: .925rem;
+  color: rgba(255,255,255,.72);
+  line-height: 1.65;
+}
+
+.login-brand-tagline {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.15);
+  font-size: .8rem;
+  color: rgba(255,255,255,.45);
+  letter-spacing: .3px;
+}
+
+/* Painel direito — formulário */
+.login-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--white);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-box h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: .4rem;
+}
+
+.login-box .login-subtitle {
+  font-size: .875rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+/* ============================================================
+   FORMULÁRIOS
+   ============================================================ */
+
+.form-group {
+  margin-bottom: 1.1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  margin-bottom: .45rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: .65rem .9rem;
+  font-size: .925rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-group input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(3,110,192,.12);
+}
+
+.form-group input::placeholder { color: var(--text-light); }
+
+/* ── Botões ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  padding: .65rem 1.25rem;
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  white-space: nowrap;
+}
+
+.btn:active { transform: scale(.98); }
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--blue-dark);
+  box-shadow: 0 4px 14px rgba(3,110,192,.35);
+}
+
+.btn-primary-full {
+  width: 100%;
+  padding: .75rem;
+  font-size: .95rem;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--blue);
+  border: 1.5px solid var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--blue-light);
+  border-color: var(--blue);
+}
+
+.btn-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1.5px solid #fca5a5;
+}
+
+.btn-danger:hover {
+  background: #fee2e2;
+}
+
+.btn-sm {
+  padding: .35rem .75rem;
+  font-size: .8rem;
+}
+
+/* ── Alertas ── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  padding: .75rem 1rem;
+  border-radius: var(--radius);
+  font-size: .875rem;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid #bbf7d0;
+}
+
+.alert-error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid #fca5a5;
+}
+
+/* ============================================================
+   LAYOUT ADMIN — Header + Sidebar + Main
+   ============================================================ */
+
+/* Header fixo no topo */
+.app-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  background: var(--blue-header);
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem 0 0;
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(0,0,0,.18), 0 2px 8px rgba(1,47,80,.35);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  width: var(--sidebar-w);
+  padding: 0 1.25rem;
+  border-right: 1px solid rgba(255,255,255,.15);
+  height: 100%;
+}
+
+.header-brand-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.header-brand-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,.18);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.header-brand span {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.2px;
+}
+
+.header-spacer { flex: 1; }
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  color: rgba(255,255,255,.9);
+  font-size: .85rem;
+}
+
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Sidebar fixa à esquerda */
+.app-sidebar {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 1rem .75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-section-label {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  padding: .5rem .75rem;
+  margin-top: .5rem;
+}
+
+.sidebar-nav {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem .85rem;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: .9rem;
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition);
+  text-decoration: none;
+}
+
+.sidebar-nav li a:hover {
+  background: var(--blue-light);
+  color: var(--blue);
+}
+
+.sidebar-nav li a.active {
+  background: var(--blue-light);
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.sidebar-nav li a .nav-icon {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-footer form button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem .85rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.sidebar-footer form button:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Área de conteúdo */
+.app-content {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--header-h);
+  padding: 2rem 2.25rem;
+  min-height: calc(100vh - var(--header-h));
+}
+
+/* ── Page header ── */
+.page-header {
+  margin-bottom: 1.75rem;
+}
+
+.page-header h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.3px;
+}
+
+.page-header p {
+  font-size: .875rem;
+  color: var(--text-muted);
+  margin-top: .25rem;
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card-badge {
+  background: var(--blue-light);
+  color: var(--blue);
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .2rem .65rem;
+  border-radius: 20px;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* ── Layout de duas colunas ── */
+.cols-2 {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ============================================================
+   TABELA
+   ============================================================ */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .875rem;
+}
+
+.data-table thead th {
+  padding: .7rem 1rem;
+  text-align: left;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+
+.data-table tbody tr:last-child { border-bottom: none; }
+
+.data-table tbody tr:hover { background: var(--blue-light); }
+
+.data-table tbody td {
+  padding: .85rem 1rem;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.td-muted {
+  color: var(--text-muted);
+  font-size: .82rem;
+}
+
+.td-id {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Avatar inicial ── */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--blue-mid);
+  color: var(--blue-deeper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+}
+
+.empty-state-icon {
+  font-size: 2.5rem;
+  margin-bottom: .75rem;
+  opacity: .4;
+}
+
+.empty-state p { font-size: .9rem; }
+
+/* ============================================================
+   PÁGINA HOME DO USUÁRIO (Entrou)
+   ============================================================ */
+
+.home-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  gap: 1.5rem;
+}
+
+.home-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 2.5rem 3rem;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+}
+
+.home-card .welcome-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.home-card h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: .5rem;
+}
+
+.home-card p {
+  color: var(--text-muted);
+  font-size: .9rem;
+  margin-bottom: 1.75rem;
+}
+
+/* ============================================================
+   ANIMAÇÕES
+   ============================================================ */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp .32s ease both;
+}
+
+/* ── Delay utilities ── */
+.d1 { animation-delay: .05s; }
+.d2 { animation-delay: .12s; }
+.d3 { animation-delay: .19s; }
+
+/* ============================================================
+   RESPONSIVIDADE
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .login-brand { flex: 0 0 300px; padding: 2rem; }
+  .cols-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .login-brand { display: none; }
+  .login-panel { padding: 1.5rem 1rem; }
+  .app-content { padding: 1.25rem 1rem; }
+  .cols-2 { grid-template-columns: 1fr; }
+}

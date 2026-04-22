@@ -11,6 +11,9 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Arquivos estáticos
+app.use(express.static('public'));
+
 // Template engine
 app.set('view engine', 'ejs');
 app.set('views', './views');

@@ -1,26 +1,53 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Login Admin</title>
+  <%- include('../partials/_head') %>
+    <title>Login Admin — FoodTech</title>
 </head>
+
 <body>
-  <h1>Login Administrador</h1>
 
-  <% if (erro === 'credenciais_invalidas') { %>
-    <p style="color:red;">Usuário ou senha incorretos.</p>
-  <% } %>
+  <div class="login-root">
 
-  <form action="/admin/login" method="POST">
-    <div>
-      <label for="username">Usuário:</label>
-      <input type="text" id="username" name="username" required>
+    <!-- Painel esquerdo: identidade -->
+    <div class="login-brand">
+      <img class="login-brand-logo" src="/icons/logo.png" alt="">
+      <h1>Sistema de Auditoria de Rótulos</h1>
+      <p>Plataforma inteligente para análise e validação de rótulos de produtos lácteos com IA.</p>
+      <p class="login-brand-tagline">FoodTech Consultoria · Área Restrita</p>
     </div>
-    <div>
-      <label for="password">Senha:</label>
-      <input type="password" id="password" name="password" required>
+
+    <!-- Painel direito: formulário -->
+    <div class="login-panel">
+      <div class="login-box fade-up">
+        <h2>Acesso Administrativo</h2>
+        <p class="login-subtitle">Entre com suas credenciais de administrador.</p>
+
+        <% if (erro==='credenciais_invalidas' ) { %>
+          <div class="alert alert-error">
+            ⚠️ Usuário ou senha incorretos. Verifique e tente novamente.
+          </div>
+          <% } %>
+
+            <form action="/admin/login" method="POST">
+              <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" name="username" placeholder="ex: adrianasuper" required autofocus>
+              </div>
+              <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-primary-full" style="margin-top:.5rem;">
+                Entrar no painel
+              </button>
+            </form>
+      </div>
     </div>
-    <button type="submit">Entrar</button>
-  </form>
+
+  </div>
+
 </body>
+
 </html>

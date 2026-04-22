@@ -1,85 +1,99 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Usuários - Admin</title>
+  <%- include('../partials/_head') %>
+  <title>Usuários — FoodTech</title>
 </head>
 <body>
-  <div style="display: flex; gap: 2rem;">
 
-    <!-- Menu lateral -->
-    <nav>
-      <ul>
-        <li><a href="/admin/usuarios">Usuários</a></li>
-      </ul>
-    </nav>
+<%- include('../partials/_admin-layout', { currentPage: 'usuarios' }) %>
 
-    <!-- Conteúdo principal -->
-    <main>
-      <h1>Usuários Cadastrados</h1>
+<div class="app-content">
+  <div class="page-header fade-up">
+    <h1>Usuários</h1>
+    <p>Cadastre e visualize os usuários com acesso ao sistema.</p>
+  </div>
 
-      <!-- Formulário de cadastro -->
-      <h2>Novo Usuário</h2>
+  <div class="cols-2">
 
-      <% if (sucesso === 'usuario_criado') { %>
-        <p style="color:green;">Usuário cadastrado com sucesso!</p>
-      <% } %>
-      <% if (erro === 'usuario_ja_existe') { %>
-        <p style="color:red;">Erro: esse nome de usuário já existe.</p>
-      <% } else if (erro === 'erro_interno') { %>
-        <p style="color:red;">Erro interno. Tente novamente.</p>
-      <% } %>
+    <!-- Card: formulário de cadastro -->
+    <div class="card fade-up d1">
+      <div class="card-header">
+        <h2>Novo usuário</h2>
+      </div>
+      <div class="card-body">
 
-      <form action="/admin/usuarios" method="POST">
-        <div>
-          <label for="username">Usuário:</label>
-          <input type="text" id="username" name="username" required>
-        </div>
-        <div>
-          <label for="password">Senha:</label>
-          <input type="password" id="password" name="password" required>
-        </div>
-        <button type="submit">Cadastrar</button>
-      </form>
+        <% if (sucesso === 'usuario_criado') { %>
+          <div class="alert alert-success">✅ Usuário cadastrado com sucesso!</div>
+        <% } %>
+        <% if (erro === 'usuario_ja_existe') { %>
+          <div class="alert alert-error">⚠️ Esse nome de usuário já existe.</div>
+        <% } else if (erro === 'erro_interno') { %>
+          <div class="alert alert-error">⚠️ Erro interno. Tente novamente.</div>
+        <% } %>
 
-      <hr>
+        <form action="/admin/usuarios" method="POST">
+          <div class="form-group">
+            <label for="username">Nome de usuário</label>
+            <input type="text" id="username" name="username" placeholder="ex: joao.silva" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.25rem;">
+            Cadastrar usuário
+          </button>
+        </form>
 
-      <!-- Tabela de usuários -->
-      <h2>Todos os Usuários (<%= usuarios.length %>)</h2>
+      </div>
+    </div>
+
+    <!-- Card: tabela de usuários -->
+    <div class="card fade-up d2">
+      <div class="card-header">
+        <h2>Usuários cadastrados</h2>
+        <span class="card-badge"><%= usuarios.length %> no total</span>
+      </div>
 
       <% if (usuarios.length === 0) { %>
-        <p>Nenhum usuário cadastrado ainda.</p>
+        <div class="empty-state">
+          <div class="empty-state-icon">👤</div>
+          <p>Nenhum usuário cadastrado ainda.<br>Use o formulário ao lado para adicionar.</p>
+        </div>
       <% } else { %>
-        <table border="1" cellpadding="6" cellspacing="0">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Usuário</th>
-              <th>Criado em</th>
-              <th>Atualizado em</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% usuarios.forEach(function(u) { %>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
               <tr>
-                <td><%= u.id %></td>
-                <td><%= u.username %></td>
-                <td><%= new Date(u.createdAt).toLocaleString('pt-BR') %></td>
-                <td><%= new Date(u.updatedAt).toLocaleString('pt-BR') %></td>
+                <th>#</th>
+                <th>Usuário</th>
+                <th>Criado em</th>
+                <th>Atualizado em</th>
               </tr>
-            <% }) %>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <% usuarios.forEach(function(u) { %>
+                <tr>
+                  <td class="td-id"><%= u.id %></td>
+                  <td>
+                    <div class="user-cell">
+                      <div class="user-avatar"><%= u.username.charAt(0) %></div>
+                      <span class="user-name"><%= u.username %></span>
+                    </div>
+                  </td>
+                  <td class="td-muted"><%= new Date(u.createdAt).toLocaleString('pt-BR') %></td>
+                  <td class="td-muted"><%= new Date(u.updatedAt).toLocaleString('pt-BR') %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
       <% } %>
-
-      <br>
-      <a href="/admin/dashboard">← Voltar ao painel</a>
-
-      <form action="/admin/logout" method="POST" style="margin-top: 1rem;">
-        <button type="submit">Sair</button>
-      </form>
-    </main>
+    </div>
 
   </div>
+</div>
+
 </body>
 </html>

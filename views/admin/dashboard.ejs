@@ -1,26 +1,30 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Painel Admin</title>
+  <%- include('../partials/_head') %>
+  <title>Painel — FoodTech</title>
 </head>
 <body>
-  <div style="display: flex;">
 
-    <nav>
-      <ul>
-        <li><a href="/admin/usuarios">Usuários</a></li>
-      </ul>
-    </nav>
+<%- include('../partials/_admin-layout', { currentPage: 'dashboard' }) %>
 
-    <main>
-      <h1>Painel Administrativo</h1>
-      <p>Bem-vindo ao painel do administrador.</p>
-      <form action="/admin/logout" method="POST">
-        <button type="submit">Sair</button>
-      </form>
-    </main>
-
+<div class="app-content">
+  <div class="page-header fade-up">
+    <h1>Visão Geral</h1>
+    <p>Bem-vindo ao painel administrativo da FoodTech.</p>
   </div>
+
+  <div class="card fade-up d1" style="max-width:480px;">
+    <div class="card-body" style="display:flex; align-items:center; gap:1rem;">
+      <div style="font-size:2.5rem;">👥</div>
+      <div>
+        <p style="font-size:.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;">Gestão</p>
+        <p style="font-size:1rem; font-weight:600; color:var(--text); margin-top:.2rem;">Usuários cadastrados</p>
+        <a href="/admin/usuarios" class="btn btn-primary btn-sm" style="margin-top:.75rem;">Gerenciar usuários</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
