@@ -206,6 +206,34 @@ a:hover { text-decoration: underline; }
 
 .form-group input::placeholder { color: var(--text-light); }
 
+/* ── Toggle de senha ── */
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrap input {
+  padding-right: 2.75rem;
+}
+
+.toggle-password {
+  position: absolute;
+  right: .75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0;
+  color: var(--text-light);
+  transition: color var(--transition);
+  flex-shrink: 0;
+}
+
+.toggle-password:hover { color: var(--blue); }
+
+.toggle-password svg { display: block; }
+
 /* ── Botões ── */
 .btn {
   display: inline-flex;
