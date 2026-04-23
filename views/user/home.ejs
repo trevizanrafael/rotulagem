@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title>Início — FoodTech</title>
+</head>
+<body>
+
+<div class="home-root">
+  <div class="home-card fade-up">
+    <div class="welcome-icon">✅</div>
+    <h1>Bem-vindo!</h1>
+    <p>Você está autenticado como <strong><%= username %></strong>.<br>O sistema está em construção.</p>
+    <form action="/logout" method="POST">
+      <button type="submit" class="btn btn-ghost" style="width:100%;">
+        🚪 Sair da conta
+      </button>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

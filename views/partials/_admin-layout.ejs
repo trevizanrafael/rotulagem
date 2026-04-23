@@ -1,0 +1,39 @@
+<!-- Header fixo -->
+<header class="app-header">
+  <div class="header-brand">
+    <img class="header-brand-logo" src="/icons/logo.png" alt="FoodTech">
+    <span>FoodTech</span>
+  </div>
+
+  <div class="header-spacer"></div>
+
+  <div class="header-user">
+    <div class="header-avatar">A</div>
+    <span>Administrador</span>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<aside class="app-sidebar">
+  <p class="sidebar-section-label">Menu</p>
+  <ul class="sidebar-nav">
+    <li>
+      <a href="/admin/dashboard" class="<%= currentPage === 'dashboard' ? 'active' : '' %>">
+        <span class="nav-icon">🏠</span> Início
+      </a>
+    </li>
+    <li>
+      <a href="/admin/usuarios" class="<%= currentPage === 'usuarios' ? 'active' : '' %>">
+        <span class="nav-icon">👥</span> Usuários
+      </a>
+    </li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <form action="/admin/logout" method="POST">
+      <button type="submit">
+        <span class="nav-icon">🚪</span> Sair
+      </button>
+    </form>
+  </div>
+</aside>
