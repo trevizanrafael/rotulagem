@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const categoriasController = require('../controllers/categoriasController');
+const subcategoriasController = require('../controllers/subcategoriasController');
 
 const requireAdmin = categoriasController.requireAdmin;
 
@@ -25,4 +26,15 @@ router.post('/categorias/:id', requireAdmin, categoriasController.putCategoria);
 router.post('/categorias/:id/deletar', requireAdmin, categoriasController.deleteCategoria);
 router.post('/categorias/:id/status', requireAdmin, categoriasController.toggleStatus);
 
+// Subcategorias de produtos
+router.get('/subcategorias', requireAdmin, subcategoriasController.getSubcategorias);
+router.post('/subcategorias', requireAdmin, subcategoriasController.postSubcategoria);
+router.post('/subcategorias/importar', requireAdmin, subcategoriasController.importarSubcategorias);
+router.post('/subcategorias/deletar-selecionados', requireAdmin, subcategoriasController.deletarSelecionados);
+router.get('/subcategorias/:id/editar', requireAdmin, subcategoriasController.getEditarSubcategoria);
+router.post('/subcategorias/:id', requireAdmin, subcategoriasController.putSubcategoria);
+router.post('/subcategorias/:id/deletar', requireAdmin, subcategoriasController.deleteSubcategoria);
+router.post('/subcategorias/:id/status', requireAdmin, subcategoriasController.toggleStatusSub);
+
 module.exports = router;
+
