@@ -63,7 +63,7 @@
     <% } %>
 
     <!-- ── Formulário de criação ── -->
-    <div class="card fade-up d1" style="max-width:680px; margin-bottom:2rem;">
+    <div class="card fade-up d1" style="margin-bottom:2rem;">
       <div class="card-header">
         <h2>Novo Checklist</h2>
       </div>
@@ -80,12 +80,6 @@
                 <option value="GERAL" selected>🌐 Geral</option>
                 <option value="ESPECIFICA">🎯 Específica</option>
               </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1;">
-              <label for="versao">Versão</label>
-              <input type="text" id="versao" name="versao" placeholder="1.0" maxlength="20" value="1.0">
             </div>
           </div>
           <div class="form-group">
@@ -114,7 +108,6 @@
               <div class="chk-card-meta">
                 <span class="chk-codigo"><%= chk.codigo %></span>
                 <span class="chk-tipo chk-tipo-<%= chk.tipo.toLowerCase() %>"><%= chk.tipo %></span>
-                <span class="chk-versao">v<%= chk.versao %></span>
               </div>
               <span class="status-badge <%= chk.status === 'ativo' ? 'status-ativo' : 'status-inativo' %>">
                 <%= chk.status === 'ativo' ? '✅ Ativo' : '⛔ Inativo' %>
@@ -133,7 +126,6 @@
                 data-id="<%= chk.id %>"
                 data-nome="<%= (chk.nome || '').replace(/"/g, '&quot;') %>"
                 data-tipo="<%= chk.tipo %>"
-                data-versao="<%= (chk.versao || '').replace(/"/g, '&quot;') %>"
                 data-descricao="<%= (chk.descricao || '').replace(/"/g, '&quot;') %>"
                 data-status="<%= chk.status %>">
                 ✏️ Editar
@@ -172,19 +164,13 @@
               </select>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1;">
-              <label>Versão</label>
-              <input type="text" id="edit-versao" name="versao" maxlength="20">
-            </div>
-            <div class="form-group" style="flex:1;">
+          <div class="form-group" style="flex:1;">
               <label>Status</label>
               <select id="edit-status" name="status">
                 <option value="ativo">✅ Ativo</option>
                 <option value="inativo">⛔ Inativo</option>
               </select>
             </div>
-          </div>
           <div class="form-group">
             <label>Descrição</label>
             <textarea id="edit-descricao" name="descricao" rows="3"></textarea>
@@ -407,12 +393,11 @@
 
   <script>
     // ── Modal editar ──────────────────────────────────────────
-    function abrirModalEditar(id, nome, tipo, versao, descricao, status) {
-      document.getElementById('edit-nome').value      = nome     || '';
-      document.getElementById('edit-tipo').value      = tipo     || 'GERAL';
-      document.getElementById('edit-versao').value    = versao   || '1.0';
+    function abrirModalEditar(id, nome, tipo, descricao, status) {
+      document.getElementById('edit-nome').value      = nome      || '';
+      document.getElementById('edit-tipo').value      = tipo      || 'GERAL';
       document.getElementById('edit-descricao').value = descricao || '';
-      document.getElementById('edit-status').value    = status   || 'ativo';
+      document.getElementById('edit-status').value    = status    || 'ativo';
       document.getElementById('form-editar').action   = '/admin/checklists/' + id + '/editar';
       document.getElementById('modal-editar').style.display = 'flex';
     }
@@ -448,7 +433,7 @@
       const btnEdit = e.target.closest('.btn-editar-chk');
       if (btnEdit) {
         const d = btnEdit.dataset;
-        abrirModalEditar(d.id, d.nome, d.tipo, d.versao, d.descricao, d.status);
+        abrirModalEditar(d.id, d.nome, d.tipo, d.descricao, d.status);
         return;
       }
       const btnDel = e.target.closest('.btn-excluir-chk');

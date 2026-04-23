@@ -38,7 +38,7 @@ const getChecklists = async (req, res) => {
 };
 
 const postChecklist = async (req, res) => {
-  const { nome, tipo, descricao, versao } = req.body;
+  const { nome, tipo, descricao } = req.body;
   try {
     const codigo = await gerarCodigo();
     await Checklist.create({
@@ -46,7 +46,6 @@ const postChecklist = async (req, res) => {
       nome: nome.trim(),
       tipo: tipo || 'GERAL',
       descricao: descricao?.trim() || null,
-      versao: versao?.trim() || '1.0',
       status: 'ativo',
     });
     res.redirect('/admin/checklists?success=checklist_criado');
@@ -57,7 +56,7 @@ const postChecklist = async (req, res) => {
 };
 
 const putChecklist = async (req, res) => {
-  const { nome, tipo, descricao, versao, status } = req.body;
+  const { nome, tipo, descricao, status } = req.body;
   try {
     const chk = await Checklist.findByPk(req.params.id);
     if (!chk) return res.redirect('/admin/checklists?error=nao_encontrado');
@@ -65,7 +64,6 @@ const putChecklist = async (req, res) => {
       nome: nome.trim(),
       tipo: tipo || 'GERAL',
       descricao: descricao?.trim() || null,
-      versao: versao?.trim() || chk.versao,
       status: status || chk.status,
     });
     res.redirect('/admin/checklists?success=checklist_atualizado');
