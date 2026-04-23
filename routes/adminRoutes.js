@@ -10,6 +10,9 @@ router.post('/login', adminController.postLogin);
 router.get('/dashboard', adminController.getDashboard);
 router.get('/usuarios', adminController.getUsuarios);
 router.post('/usuarios', adminController.postUsuario);
+router.post('/usuarios/deletar-selecionados', adminController.deletarSelecionadosUsuarios);
+router.post('/usuarios/:id', adminController.putUsuario);
+router.post('/usuarios/:id/deletar', adminController.deleteUsuario);
 router.post('/logout', adminController.postLogout);
 
 // Categorias de produtos

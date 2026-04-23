@@ -13,7 +13,7 @@
     <div class="app-content">
       <div class="page-header fade-up">
         <h1>Usuários</h1>
-        <p>Cadastre e visualize os usuários com acesso ao sistema.</p>
+        <p>Cadastre, edite e gerencie os usuários com acesso ao sistema.</p>
       </div>
 
       <div class="cols-2">
@@ -28,9 +28,14 @@
             <!-- Notificação automática via #page-notify (lido por modal.js) -->
             <%
               let _type = '', _title = '', _msg = '', _ac = 'true';
-              if (sucesso === 'usuario_criado')       { _type='success'; _title='Usuário criado';    _msg='Usuário cadastrado com sucesso!'; }
-              else if (erro === 'usuario_ja_existe')  { _type='error';   _title='Nome em uso';       _msg='Esse nome de usuário já está em uso.'; _ac='false'; }
-              else if (erro === 'erro_interno')        { _type='error';   _title='Erro interno';      _msg='Ocorreu um erro inesperado. Tente novamente.'; _ac='false'; }
+              if (sucesso === 'usuario_criado')           { _type='success'; _title='Usuário criado';     _msg='Usuário cadastrado com sucesso!'; }
+              else if (sucesso === 'usuario_atualizado')  { _type='success'; _title='Atualizado';         _msg='Usuário atualizado com sucesso!'; }
+              else if (sucesso === 'usuario_deletado')    { _type='success'; _title='Removido';           _msg='Usuário removido com sucesso!'; }
+              else if (sucesso === 'selecionados_deletados') { _type='success'; _title='Excluídos'; _msg=(count || 'Os usuários') + ' selecionado(s) foram excluídos.'; }
+              else if (erro === 'usuario_ja_existe')      { _type='error';   _title='Nome em uso';        _msg='Esse nome de usuário já está em uso.'; _ac='false'; }
+              else if (erro === 'nao_encontrado')         { _type='error';   _title='Não encontrado';     _msg='Usuário não encontrado.'; _ac='false'; }
+              else if (erro === 'nenhum_selecionado')     { _type='warning'; _title='Nenhum selecionado'; _msg='Selecione ao menos um usuário antes de prosseguir.'; _ac='false'; }
+              else if (erro === 'erro_interno')           { _type='error';   _title='Erro interno';       _msg='Ocorreu um erro inesperado. Tente novamente.'; _ac='false'; }
             %>
             <% if (_type) { %>
               <div id="page-notify" hidden
@@ -40,37 +45,37 @@
                 data-autoclose="<%= _ac %>"></div>
             <% } %>
 
-                      <form action="/admin/usuarios" method="POST">
-                        <div class="form-group">
-                          <label for="username">Nome de usuário</label>
-                          <input type="text" id="username" name="username" placeholder="ex: joao.silva" required>
-                        </div>
-                        <div class="form-group">
-                          <label for="password">Senha</label>
-                          <div class="input-wrap">
-                            <input type="password" id="password" name="password" placeholder="" required>
-                            <button type="button" class="toggle-password" onclick="togglePassword(this)"
-                              aria-label="Mostrar senha">
-                              <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                <circle cx="12" cy="12" r="3" />
-                              </svg>
-                              <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" style="display:none">
-                                <path
-                                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                <line x1="1" y1="1" x2="23" y2="23" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.25rem;">
-                          Cadastrar usuário
-                        </button>
-                      </form>
+            <form action="/admin/usuarios" method="POST">
+              <div class="form-group">
+                <label for="username">Nome de usuário</label>
+                <input type="text" id="username" name="username" placeholder="ex: joao.silva" required>
+              </div>
+              <div class="form-group">
+                <label for="password">Senha</label>
+                <div class="input-wrap">
+                  <input type="password" id="password" name="password" placeholder="" required>
+                  <button type="button" class="toggle-password" onclick="togglePassword(this)"
+                    aria-label="Mostrar senha">
+                    <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                      <path
+                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.25rem;">
+                ➕ Cadastrar usuário
+              </button>
+            </form>
 
           </div>
         </div>
@@ -79,59 +84,353 @@
         <div class="card fade-up d2">
           <div class="card-header">
             <h2>Usuários cadastrados</h2>
-            <span class="card-badge">
-              <%= usuarios.length %> no total
-            </span>
+            <div class="header-actions">
+              <span class="card-badge">
+                <%= usuarios.length %> no total
+              </span>
+              <button id="btn-del-sel" class="btn btn-danger btn-sm" style="display:none"
+                onclick="deletarSelecionados()">
+                🗑️ Excluir
+              </button>
+            </div>
           </div>
 
-          <% if (usuarios.length===0) { %>
+          <% if (usuarios.length === 0) { %>
             <div class="empty-state">
               <div class="empty-state-icon">👤</div>
               <p>Nenhum usuário cadastrado ainda.<br>Use o formulário ao lado para adicionar.</p>
             </div>
-            <% } else { %>
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead>
+          <% } else { %>
+
+            <!-- Form oculto para exclusão em massa -->
+            <form id="form-del-sel" action="/admin/usuarios/deletar-selecionados" method="POST"
+              style="display:none;"></form>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="th-check">
+                      <input type="checkbox" id="select-all" title="Selecionar todos"
+                        onchange="toggleSelectAll(this)">
+                    </th>
+                    <th>#</th>
+                    <th>Usuário</th>
+                    <th>Criado em</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% usuarios.forEach(function(u) { %>
                     <tr>
-                      <th>#</th>
-                      <th>Usuário</th>
-                      <th>Criado em</th>
-                      <th>Atualizado em</th>
+                      <td class="td-check">
+                        <input type="checkbox" class="row-check" value="<%= u.id %>"
+                          data-username="<%= u.username %>"
+                          onchange="onCheckChange()">
+                      </td>
+                      <td class="td-id"><%= u.id %></td>
+                      <td>
+                        <div class="user-cell">
+                          <div class="user-avatar"><%= u.username.charAt(0).toUpperCase() %></div>
+                          <span class="user-name"><%= u.username %></span>
+                        </div>
+                      </td>
+                      <td class="td-muted">
+                        <%= new Date(u.createdAt).toLocaleString('pt-BR') %>
+                      </td>
+                      <td>
+                        <div class="action-btns">
+                          <button type="button" class="btn-icon btn-edit" title="Editar"
+                            data-id="<%= u.id %>" data-username="<%= u.username %>"
+                            onclick="abrirModalEditar(this.dataset.id, this.dataset.username)">✏️</button>
+                          <form action="/admin/usuarios/<%= u.id %>/deletar" method="POST" style="display:inline;">
+                            <button type="button" class="btn-icon btn-delete" title="Excluir"
+                              data-nome="<%= u.username %>"
+                              onclick="confirmDelete(this, this.dataset.nome)">🗑️</button>
+                          </form>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    <% usuarios.forEach(function(u) { %>
-                      <tr>
-                        <td class="td-id">
-                          <%= u.id %>
-                        </td>
-                        <td>
-                          <div class="user-cell">
-                            <div class="user-avatar">
-                              <%= u.username.charAt(0) %>
-                            </div>
-                            <span class="user-name">
-                              <%= u.username %>
-                            </span>
-                          </div>
-                        </td>
-                        <td class="td-muted">
-                          <%= new Date(u.createdAt).toLocaleString('pt-BR') %>
-                        </td>
-                        <td class="td-muted">
-                          <%= new Date(u.updatedAt).toLocaleString('pt-BR') %>
-                        </td>
-                      </tr>
-                      <% }) %>
-                  </tbody>
-                </table>
-              </div>
-              <% } %>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
         </div>
 
+      </div><!-- /.cols-2 -->
+    </div><!-- /.app-content -->
+
+    <!-- ===================== MODAL DE EDIÇÃO ===================== -->
+    <div id="edit-overlay" class="edit-overlay" onclick="fecharModalEditar(event)">
+      <div class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+        <div class="edit-modal-header">
+          <h3 id="edit-modal-title">✏️ Editar usuário</h3>
+          <button class="edit-modal-close" onclick="fecharModalEditar()" aria-label="Fechar">&times;</button>
+        </div>
+        <form id="form-editar" method="POST">
+          <div class="edit-modal-body">
+            <div class="form-group">
+              <label for="edit-username">Nome de usuário <span style="color:var(--danger);">*</span></label>
+              <input type="text" id="edit-username" name="username" required maxlength="100"
+                placeholder="Nome de usuário">
+            </div>
+            <div class="form-group">
+              <label for="edit-password">
+                Nova senha
+                <span style="font-size:.8rem; color:var(--text-muted); font-weight:400;">(deixe vazio para não alterar)</span>
+              </label>
+              <div class="input-wrap">
+                <input type="password" id="edit-password" name="password" placeholder="••••••••">
+                <button type="button" class="toggle-password" onclick="togglePassword(this)"
+                  aria-label="Mostrar senha">
+                  <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                    <path
+                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="edit-modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="fecharModalEditar()">Cancelar</button>
+            <button type="submit" class="btn btn-primary">💾 Salvar alterações</button>
+          </div>
+        </form>
       </div>
     </div>
+
+    <style>
+      /* ── Header com ações ── */
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+      }
+
+      /* ── Botões de ação ── */
+      .action-btns {
+        display: flex;
+        gap: .4rem;
+        align-items: center;
+      }
+
+      .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: .4rem;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        background: transparent;
+        transition: background .15s, transform .1s;
+        text-decoration: none;
+      }
+
+      .btn-icon:hover {
+        background: rgba(0, 0, 0, .06);
+        transform: scale(1.1);
+      }
+
+      .btn-edit:hover { background: #dbeafe; }
+      .btn-delete:hover { background: #fee2e2; }
+
+      /* ── Coluna de checkbox ── */
+      .th-check,
+      .td-check {
+        width: 2.25rem;
+        text-align: center;
+        padding-left: 1rem !important;
+      }
+
+      input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        cursor: pointer;
+        accent-color: var(--blue);
+      }
+
+      /* ── Linha selecionada ── */
+      tr.row-selected {
+        background: var(--blue-light) !important;
+      }
+
+      /* ══════════════════════════════════════════
+         MODAL DE EDIÇÃO
+      ══════════════════════════════════════════ */
+      .edit-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .45);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 900;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .22s ease;
+      }
+
+      .edit-overlay.edit-visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .edit-modal {
+        background: var(--white);
+        border-radius: var(--radius-lg, 1rem);
+        box-shadow: 0 20px 60px rgba(0,0,0,.18);
+        width: 100%;
+        max-width: 460px;
+        margin: 1rem;
+        transform: scale(.94) translateY(12px);
+        transition: transform .22s ease, opacity .22s ease;
+        opacity: 0;
+        overflow: hidden;
+      }
+
+      .edit-overlay.edit-visible .edit-modal {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+
+      .edit-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .edit-modal-header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .edit-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+        line-height: 1;
+        padding: .1rem .3rem;
+        border-radius: .3rem;
+        transition: background .15s, color .15s;
+      }
+
+      .edit-modal-close:hover {
+        background: #fee2e2;
+        color: var(--danger);
+      }
+
+      .edit-modal-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: .25rem;
+      }
+
+      .edit-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: .75rem;
+      }
+    </style>
+
+    <script>
+      // ── Seleção ──────────────────────────────────────────────
+      function getChecks() { return [...document.querySelectorAll('.row-check')]; }
+      function getSelected() { return getChecks().filter(c => c.checked); }
+
+      function onCheckChange() {
+        const all = getChecks();
+        const sel = getSelected();
+        const sa = document.getElementById('select-all');
+        if (sa) {
+          sa.checked = sel.length > 0 && sel.length === all.length;
+          sa.indeterminate = sel.length > 0 && sel.length < all.length;
+        }
+        all.forEach(c => c.closest('tr').classList.toggle('row-selected', c.checked));
+        const btn = document.getElementById('btn-del-sel');
+        if (btn) btn.style.display = sel.length > 0 ? 'inline-flex' : 'none';
+      }
+
+      function toggleSelectAll(el) {
+        getChecks().forEach(c => { c.checked = el.checked; });
+        onCheckChange();
+      }
+
+      // ── Excluir selecionados ─────────────────────────────────
+      function deletarSelecionados() {
+        const sel = getSelected();
+        if (!sel.length) return;
+        const nomes = sel.map(c => c.dataset.username).join(', ');
+        Modal.confirm({
+          title: 'Excluir selecionados',
+          message: `Deseja excluir <strong>${sel.length}</strong> usuário(s)?<br><small style="color:var(--text-muted)">${nomes}</small>`,
+          confirmText: '🗑️ Excluir',
+          onConfirm: () => {
+            const form = document.getElementById('form-del-sel');
+            form.innerHTML = '';
+            sel.forEach(c => {
+              const inp = document.createElement('input');
+              inp.type = 'hidden'; inp.name = 'ids'; inp.value = c.value;
+              form.appendChild(inp);
+            });
+            form.submit();
+          }
+        });
+      }
+
+      // ── Modal de edição ──────────────────────────────────────
+      function abrirModalEditar(id, username) {
+        document.getElementById('form-editar').action = `/admin/usuarios/${id}`;
+        document.getElementById('edit-username').value = username;
+        document.getElementById('edit-password').value = '';
+        // Garante que o olho do campo de senha esteja no estado inicial
+        const pwInput = document.getElementById('edit-password');
+        pwInput.type = 'password';
+        const btn = pwInput.parentElement.querySelector('.toggle-password');
+        if (btn) {
+          btn.querySelector('.eye-open').style.display  = 'inline';
+          btn.querySelector('.eye-closed').style.display = 'none';
+        }
+        document.getElementById('edit-overlay').classList.add('edit-visible');
+        setTimeout(() => document.getElementById('edit-username').focus(), 50);
+      }
+
+      function fecharModalEditar(event) {
+        if (event && event.target !== document.getElementById('edit-overlay')) return;
+        document.getElementById('edit-overlay').classList.remove('edit-visible');
+      }
+
+      // Fecha com ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') fecharModalEditar();
+      });
+
+      // Chama fecharModalEditar sem event ao clicar no botão Cancelar
+      // (já está no onclick inline, este é só o ESC handler)
+    </script>
 
 </body>
 
