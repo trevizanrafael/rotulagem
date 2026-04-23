@@ -5,6 +5,7 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const sequelize = require('./config/database');
 const User = require('./models/User');
+require('./models/CategoriaProduto'); // registrar model para sync
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title>Categorias de Produtos — FoodTech</title>
+</head>
+<body>
+
+  <%- include('../partials/_admin-layout', { currentPage: 'categorias' }) %>
+
+  <div class="app-content">
+    <div class="page-header fade-up">
+      <h1>Categorias de Produtos</h1>
+      <p>Gerencie as categorias disponíveis para classificação de produtos.</p>
+    </div>
+
+    <div class="cols-2">
+
+      <!-- ======================== FORMULÁRIO ======================== -->
+      <div class="card fade-up d1">
+        <div class="card-header">
+          <% if (editando) { %>
+            <h2>Editar categoria</h2>
+          <% } else { %>
+            <h2>Nova categoria</h2>
+          <% } %>
+        </div>
+        <div class="card-body">
+
+          <!-- Alertas -->
+          <% if (sucesso === 'categoria_criada') { %>
+            <div class="alert alert-success">✅ Categoria criada com sucesso!</div>
+          <% } else if (sucesso === 'categoria_atualizada') { %>
+            <div class="alert alert-success">✅ Categoria atualizada com sucesso!</div>
+          <% } else if (sucesso === 'categoria_deletada') { %>
+            <div class="alert alert-success">🗑️ Categoria removida com sucesso!</div>
+          <% } else if (sucesso === 'status_alterado') { %>
+            <div class="alert alert-success">🔄 Status alterado com sucesso!</div>
+          <% } %>
+
+          <% if (erro === 'nome_ja_existe') { %>
+            <div class="alert alert-error">⚠️ Já existe uma categoria com esse nome.</div>
+          <% } else if (erro === 'nao_encontrado') { %>
+            <div class="alert alert-error">⚠️ Categoria não encontrada.</div>
+          <% } else if (erro === 'erro_interno') { %>
+            <div class="alert alert-error">⚠️ Erro interno. Tente novamente.</div>
+          <% } %>
+
+          <!-- Formulário CREATE -->
+          <% if (!editando) { %>
+            <form action="/admin/categorias" method="POST" id="form-criar">
+              <div class="form-group">
+                <label for="nome">Nome da categoria <span style="color:var(--danger);">*</span></label>
+                <input type="text" id="nome" name="nome" placeholder="ex: Laticínios" required maxlength="100">
+              </div>
+              <div class="form-group">
+                <label for="descricao">Descrição</label>
+                <textarea id="descricao" name="descricao" rows="3" placeholder="Descreva brevemente a categoria..." style="resize:vertical;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.25rem;">
+                ➕ Criar categoria
+              </button>
+            </form>
+
+          <!-- Formulário EDIT -->
+          <% } else { %>
+            <form action="/admin/categorias/<%= editando.id %>" method="POST" id="form-editar">
+              <div class="form-group">
+                <label for="nome-edit">Nome da categoria <span style="color:var(--danger);">*</span></label>
+                <input type="text" id="nome-edit" name="nome" value="<%= editando.nome %>" required maxlength="100">
+              </div>
+              <div class="form-group">
+                <label for="descricao-edit">Descrição</label>
+                <textarea id="descricao-edit" name="descricao" rows="3" style="resize:vertical;"><%= editando.descricao || '' %></textarea>
+              </div>
+              <div class="form-group">
+                <label for="status-edit">Status</label>
+                <select id="status-edit" name="status">
+                  <option value="ativo"   <%= editando.status === 'ativo'   ? 'selected' : '' %>>✅ Ativo</option>
+                  <option value="inativo" <%= editando.status === 'inativo' ? 'selected' : '' %>>⛔ Inativo</option>
+                </select>
+              </div>
+              <div style="display:flex; gap:.75rem; margin-top:.25rem;">
+                <button type="submit" class="btn btn-primary" style="flex:1;">💾 Salvar alterações</button>
+                <a href="/admin/categorias" class="btn btn-secondary" style="flex:1; text-align:center;">Cancelar</a>
+              </div>
+            </form>
+          <% } %>
+
+        </div>
+      </div>
+
+      <!-- ======================== TABELA ======================== -->
+      <div class="card fade-up d2">
+        <div class="card-header">
+          <h2>Categorias cadastradas</h2>
+          <span class="card-badge"><%= categorias.length %> no total</span>
+        </div>
+
+        <% if (categorias.length === 0) { %>
+          <div class="empty-state">
+            <div class="empty-state-icon">🏷️</div>
+            <p>Nenhuma categoria cadastrada ainda.<br>Use o formulário ao lado para adicionar.</p>
+          </div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nome</th>
+                  <th>Descrição</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% categorias.forEach(function(cat) { %>
+                  <tr>
+                    <td class="td-id"><%= cat.id %></td>
+                    <td style="font-weight:600; color:var(--text);"><%= cat.nome %></td>
+                    <td class="td-muted" style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="<%= cat.descricao || '' %>">
+                      <%= cat.descricao || '—' %>
+                    </td>
+                    <td>
+                      <!-- Toggle de status via POST -->
+                      <form action="/admin/categorias/<%= cat.id %>/status" method="POST" style="display:inline;">
+                        <button type="submit"
+                          class="status-badge <%= cat.status === 'ativo' ? 'status-ativo' : 'status-inativo' %>"
+                          title="Clique para alternar o status">
+                          <%= cat.status === 'ativo' ? '✅ Ativo' : '⛔ Inativo' %>
+                        </button>
+                      </form>
+                    </td>
+                    <td>
+                      <div class="action-btns">
+                        <a href="/admin/categorias/<%= cat.id %>/editar" class="btn-icon btn-edit" title="Editar">
+                          ✏️
+                        </a>
+                        <form action="/admin/categorias/<%= cat.id %>/deletar" method="POST" style="display:inline;"
+                          onsubmit="return confirm('Tem certeza que deseja excluir a categoria \'<%= cat.nome %>\'?');">
+                          <button type="submit" class="btn-icon btn-delete" title="Excluir">🗑️</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+    </div><!-- /.cols-2 -->
+  </div><!-- /.app-content -->
+
+  <style>
+    /* Status badges clicáveis */
+    .status-badge {
+      display: inline-block;
+      padding: .25rem .65rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .status-badge:hover { opacity: .8; transform: scale(.97); }
+    .status-ativo   { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+    .status-inativo { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+
+    /* Botões de ação */
+    .action-btns { display: flex; gap: .4rem; align-items: center; }
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem; height: 2rem;
+      border-radius: .4rem;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      transition: background .15s, transform .1s;
+      text-decoration: none;
+    }
+    .btn-icon:hover { background: rgba(0,0,0,.06); transform: scale(1.1); }
+    .btn-edit:hover  { background: #dbeafe; }
+    .btn-delete:hover{ background: #fee2e2; }
+
+    /* Select e textarea no form */
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: .65rem .9rem;
+      font-size: .925rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      box-sizing: border-box;
+    }
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(3,110,192,.12);
+    }
+    .form-group textarea { resize: vertical; }
+  </style>
+
+</body>
+</html>
