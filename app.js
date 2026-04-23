@@ -5,6 +5,7 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const sequelize = require('./config/database');
 const User = require('./models/User');
+require('./models/CategoriaProduto'); // registrar model para sync
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 
@@ -66,6 +67,8 @@ const init = async () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
       console.log(`   Admin:   http://localhost:${PORT}/admin/login`);
       console.log(`   Usuário: http://localhost:${PORT}/login`);
+      console.log(`   Dashboard: http://localhost:${PORT}/admin/dashboard`);
+
     });
 
   } catch (err) {
