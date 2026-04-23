@@ -67,6 +67,8 @@ const init = async () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
       console.log(`   Admin:   http://localhost:${PORT}/admin/login`);
       console.log(`   Usuário: http://localhost:${PORT}/login`);
+      console.log(`   Dashboard: http://localhost:${PORT}/admin/dashboard`);
+
     });
 
   } catch (err) {

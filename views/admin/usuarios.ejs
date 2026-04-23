@@ -25,14 +25,20 @@
           </div>
           <div class="card-body">
 
-            <% if (sucesso==='usuario_criado' ) { %>
-              <div class="alert alert-success">✅ Usuário cadastrado com sucesso!</div>
-              <% } %>
-                <% if (erro==='usuario_ja_existe' ) { %>
-                  <div class="alert alert-error">⚠️ Esse nome de usuário já existe.</div>
-                  <% } else if (erro==='erro_interno' ) { %>
-                    <div class="alert alert-error">⚠️ Erro interno. Tente novamente.</div>
-                    <% } %>
+            <!-- Notificação automática via #page-notify (lido por modal.js) -->
+            <%
+              let _type = '', _title = '', _msg = '', _ac = 'true';
+              if (sucesso === 'usuario_criado')       { _type='success'; _title='Usuário criado';    _msg='Usuário cadastrado com sucesso!'; }
+              else if (erro === 'usuario_ja_existe')  { _type='error';   _title='Nome em uso';       _msg='Esse nome de usuário já está em uso.'; _ac='false'; }
+              else if (erro === 'erro_interno')        { _type='error';   _title='Erro interno';      _msg='Ocorreu um erro inesperado. Tente novamente.'; _ac='false'; }
+            %>
+            <% if (_type) { %>
+              <div id="page-notify" hidden
+                data-type="<%= _type %>"
+                data-title="<%= _title %>"
+                data-message="<%= _msg %>"
+                data-autoclose="<%= _ac %>"></div>
+            <% } %>
 
                       <form action="/admin/usuarios" method="POST">
                         <div class="form-group">

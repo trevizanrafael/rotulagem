@@ -27,23 +27,23 @@
         </div>
         <div class="card-body">
 
-          <!-- Alertas -->
-          <% if (sucesso === 'categoria_criada') { %>
-            <div class="alert alert-success">✅ Categoria criada com sucesso!</div>
-          <% } else if (sucesso === 'categoria_atualizada') { %>
-            <div class="alert alert-success">✅ Categoria atualizada com sucesso!</div>
-          <% } else if (sucesso === 'categoria_deletada') { %>
-            <div class="alert alert-success">🗑️ Categoria removida com sucesso!</div>
-          <% } else if (sucesso === 'status_alterado') { %>
-            <div class="alert alert-success">🔄 Status alterado com sucesso!</div>
-          <% } %>
-
-          <% if (erro === 'nome_ja_existe') { %>
-            <div class="alert alert-error">⚠️ Já existe uma categoria com esse nome.</div>
-          <% } else if (erro === 'nao_encontrado') { %>
-            <div class="alert alert-error">⚠️ Categoria não encontrada.</div>
-          <% } else if (erro === 'erro_interno') { %>
-            <div class="alert alert-error">⚠️ Erro interno. Tente novamente.</div>
+          <!-- Notificação automática via #page-notify (lido por modal.js) -->
+          <%
+            let _type = '', _title = '', _msg = '', _ac = 'true';
+            if (sucesso === 'categoria_criada')     { _type='success'; _title='Categoria criada';    _msg='Categoria criada com sucesso!'; }
+            else if (sucesso === 'categoria_atualizada') { _type='success'; _title='Atualizada';    _msg='Categoria atualizada com sucesso!'; }
+            else if (sucesso === 'categoria_deletada')   { _type='success'; _title='Removida';       _msg='Categoria removida com sucesso!'; }
+            else if (sucesso === 'status_alterado')      { _type='success'; _title='Status alterado';_msg='O status da categoria foi atualizado.'; }
+            else if (erro === 'nome_ja_existe')    { _type='error';   _title='Nome duplicado';   _msg='Já existe uma categoria com esse nome.'; _ac='false'; }
+            else if (erro === 'nao_encontrado')    { _type='error';   _title='Não encontrado';   _msg='Categoria não encontrada.'; _ac='false'; }
+            else if (erro === 'erro_interno')      { _type='error';   _title='Erro interno';     _msg='Ocorreu um erro inesperado. Tente novamente.'; _ac='false'; }
+          %>
+          <% if (_type) { %>
+            <div id="page-notify" hidden
+              data-type="<%= _type %>"
+              data-title="<%= _title %>"
+              data-message="<%= _msg %>"
+              data-autoclose="<%= _ac %>"></div>
           <% } %>
 
           <!-- Formulário CREATE -->
@@ -137,9 +137,10 @@
                         <a href="/admin/categorias/<%= cat.id %>/editar" class="btn-icon btn-edit" title="Editar">
                           ✏️
                         </a>
-                        <form action="/admin/categorias/<%= cat.id %>/deletar" method="POST" style="display:inline;"
-                          onsubmit="return confirm('Tem certeza que deseja excluir a categoria \'<%= cat.nome %>\'?');">
-                          <button type="submit" class="btn-icon btn-delete" title="Excluir">🗑️</button>
+                        <form action="/admin/categorias/<%= cat.id %>/deletar" method="POST" style="display:inline;">
+                          <button type="button" class="btn-icon btn-delete" title="Excluir"
+                            data-nome="<%= cat.nome %>"
+                            onclick="confirmDelete(this, this.dataset.nome)">🗑️</button>
                         </form>
                       </div>
                     </td>
