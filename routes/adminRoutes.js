@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const categoriasController = require('../controllers/categoriasController');
 const subcategoriasController = require('../controllers/subcategoriasController');
+const checklistsController = require('../controllers/checklistsController');
 
 const requireAdmin = categoriasController.requireAdmin;
 
@@ -35,6 +36,25 @@ router.get('/subcategorias/:id/editar', requireAdmin, subcategoriasController.ge
 router.post('/subcategorias/:id', requireAdmin, subcategoriasController.putSubcategoria);
 router.post('/subcategorias/:id/deletar', requireAdmin, subcategoriasController.deleteSubcategoria);
 router.post('/subcategorias/:id/status', requireAdmin, subcategoriasController.toggleStatusSub);
+
+// ── Checklists ──────────────────────────────────────────────
+router.get('/checklists', checklistsController.requireAdmin, checklistsController.getChecklists);
+router.post('/checklists', checklistsController.requireAdmin, checklistsController.postChecklist);
+router.post('/checklists/:id/editar', checklistsController.requireAdmin, checklistsController.putChecklist);
+router.post('/checklists/:id/deletar', checklistsController.requireAdmin, checklistsController.deleteChecklist);
+
+// ── Seções de Checklist ──────────────────────────────────────
+router.get('/checklists/:checklistId/secoes', checklistsController.requireAdmin, checklistsController.getSecoes);
+router.post('/checklists/:checklistId/secoes', checklistsController.requireAdmin, checklistsController.postSecao);
+router.post('/checklists/:checklistId/secoes/reordenar', checklistsController.requireAdmin, checklistsController.reordenarSecoes);
+router.post('/checklists/:checklistId/secoes/:secaoId/editar', checklistsController.requireAdmin, checklistsController.putSecao);
+router.post('/checklists/:checklistId/secoes/:secaoId/deletar', checklistsController.requireAdmin, checklistsController.deleteSecao);
+
+// ── Itens de Seção ───────────────────────────────────────────
+router.get('/checklists/:checklistId/secoes/:secaoId/itens', checklistsController.requireAdmin, checklistsController.getItens);
+router.post('/checklists/:checklistId/secoes/:secaoId/itens', checklistsController.requireAdmin, checklistsController.postItem);
+router.post('/checklists/:checklistId/secoes/:secaoId/itens/:itemId/editar', checklistsController.requireAdmin, checklistsController.putItem);
+router.post('/checklists/:checklistId/secoes/:secaoId/itens/:itemId/deletar', checklistsController.requireAdmin, checklistsController.deleteItem);
 
 module.exports = router;
 

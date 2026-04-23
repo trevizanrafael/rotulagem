@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title>Itens — <%= secao.titulo %> — FoodTech</title>
+</head>
+<body>
+
+  <%- include('../partials/_admin-layout', { currentPage: 'checklist-itens' }) %>
+
+  <div class="app-content">
+
+    <!-- ── Breadcrumb ── -->
+    <div class="breadcrumb fade-up">
+      <a href="/admin/checklists">Checklists</a>
+      <span class="bc-sep">›</span>
+      <a href="/admin/checklists/<%= checklist.id %>/secoes"><%= checklist.codigo %> — <%= checklist.nome %></a>
+      <span class="bc-sep">›</span>
+      <span><%= secao.titulo %></span>
+    </div>
+
+    <div class="page-header fade-up">
+      <div>
+        <h1>Itens da Seção</h1>
+        <p>Gerencie os itens de verificação de <strong><%= secao.titulo %></strong>.</p>
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <span class="chk-codigo"><%= checklist.codigo %></span>
+        <span class="chk-tipo chk-tipo-<%= checklist.tipo.toLowerCase() %>"><%= checklist.tipo %></span>
+      </div>
+    </div>
+
+    <%
+      let _type='', _title='', _msg='', _ac='true';
+      if      (sucesso==='item_criado')    { _type='success'; _title='Item criado';     _msg='Item adicionado com sucesso!'; }
+      else if (sucesso==='item_atualizado'){ _type='success'; _title='Item atualizado'; _msg='Item atualizado com sucesso!'; }
+      else if (sucesso==='item_deletado')  { _type='success'; _title='Item removido';   _msg='Item removido com sucesso!'; }
+      else if (erro==='nao_encontrado')    { _type='error';   _title='Não encontrado';  _msg='Item não encontrado.'; _ac='false'; }
+      else if (erro==='erro_interno')      { _type='error';   _title='Erro interno';    _msg='Erro inesperado. Tente novamente.'; _ac='false'; }
+    %>
+    <% if (_type) { %>
+      <div id="page-notify" hidden
+        data-type="<%= _type %>"
+        data-title="<%= _title %>"
+        data-message="<%= _msg %>"
+        data-autoclose="<%= _ac %>"></div>
+    <% } %>
+
+    <div class="cols-itens fade-up d1">
+
+      <!-- ── Formulário de criação ── -->
+      <div class="card">
+        <div class="card-header"><h2>Novo Item</h2></div>
+        <div class="card-body">
+          <form action="/admin/checklists/<%= checklist.id %>/secoes/<%= secao.id %>/itens" method="POST">
+            <div class="form-group">
+              <label for="pergunta">Pergunta / Requisito <span class="req">*</span></label>
+              <textarea id="pergunta" name="pergunta" rows="3"
+                placeholder="ex: O rótulo contém o nome do produto claramente legível?" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="descricaoAjuda">Descrição / Ajuda</label>
+              <textarea id="descricaoAjuda" name="descricaoAjuda" rows="2"
+                placeholder="Orientações adicionais para o auditor..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="aceitaNaoAplicavel" name="aceitaNaoAplicavel" checked>
+                <span class="checkbox-custom"></span>
+                Aceita resposta <strong>Não Aplicável</strong>
+              </label>
+              <p class="field-hint">Além de: Conforme, Não Conforme e Não Avaliado.</p>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.5rem;">
+              ➕ Adicionar Item
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── Lista de itens ── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Itens cadastrados</h2>
+          <span class="card-badge"><%= itens.length %> item<%= itens.length !== 1 ? 'ns' : '' %></span>
+        </div>
+
+        <% if (itens.length === 0) { %>
+          <div class="empty-state" style="padding:2.5rem 1rem;">
+            <div class="empty-state-icon">📝</div>
+            <p>Nenhum item ainda.<br>Use o formulário ao lado para começar.</p>
+          </div>
+        <% } else { %>
+          <ul class="itens-list">
+            <% itens.forEach(function(item, idx) { %>
+              <li class="item-row" data-id="<%= item.id %>">
+                <div class="item-num"><%= idx + 1 %></div>
+                <div class="item-info">
+                  <p class="item-pergunta"><%= item.pergunta %></p>
+                  <% if (item.descricaoAjuda) { %>
+                    <p class="item-ajuda">💡 <%= item.descricaoAjuda %></p>
+                  <% } %>
+                  <div class="item-meta">
+                    <% if (item.aceitaNaoAplicavel) { %>
+                      <span class="tag tag-na">Aceita N/A</span>
+                    <% } %>
+                    <span class="tag tag-resp">Conforme</span>
+                    <span class="tag tag-resp">Não Conforme</span>
+                    <span class="tag tag-resp">Não Avaliado</span>
+                    <% if (item.aceitaNaoAplicavel) { %>
+                      <span class="tag tag-resp">Não Aplicável</span>
+                    <% } %>
+                    <span class="item-status <%= item.status === 'ativo' ? 'status-ativo' : 'status-inativo' %>">
+                      <%= item.status === 'ativo' ? '✅ Ativo' : '⛔ Inativo' %>
+                    </span>
+                  </div>
+                </div>
+                <div class="item-actions">
+                  <button class="btn btn-ghost btn-xs btn-editar-item"
+                    data-id="<%= item.id %>"
+                    data-pergunta="<%= (item.pergunta || '').replace(/"/g, '&quot;') %>"
+                    data-ajuda="<%= (item.descricaoAjuda || '').replace(/"/g, '&quot;') %>"
+                    data-na="<%= item.aceitaNaoAplicavel ? 'true' : 'false' %>"
+                    data-status="<%= item.status %>"
+                    title="Editar item">✏️ Editar</button>
+                  <button class="btn btn-danger btn-xs btn-excluir-item"
+                    data-id="<%= item.id %>"
+                    title="Excluir item">🗑️</button>
+                </div>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+
+    </div><!-- /.cols-itens -->
+  </div><!-- /.app-content -->
+
+  <!-- ── Modal Editar Item ── -->
+  <div id="modal-editar" class="chk-modal-overlay" style="display:none;" onclick="fecharFora(event)">
+    <div class="chk-modal" style="max-width:600px;">
+      <div class="chk-modal-header">
+        <h3>✏️ Editar Item</h3>
+        <button class="chk-modal-close" onclick="fecharModal()">✕</button>
+      </div>
+      <form id="form-editar" method="POST">
+        <div class="chk-modal-body">
+          <div class="form-group">
+            <label>Pergunta / Requisito <span class="req">*</span></label>
+            <textarea id="edit-pergunta" name="pergunta" rows="3" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Descrição / Ajuda</label>
+            <textarea id="edit-ajuda" name="descricaoAjuda" rows="2"></textarea>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="edit-na" name="aceitaNaoAplicavel">
+                <span class="checkbox-custom"></span>
+                Aceita <strong>Não Aplicável</strong>
+              </label>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="edit-status" name="status">
+                <option value="ativo">✅ Ativo</option>
+                <option value="inativo">⛔ Inativo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="chk-modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <form id="form-deletar" method="POST" style="display:none;"></form>
+
+  <style>
+    /* ── Breadcrumb ── */
+    .breadcrumb { display:flex; align-items:center; gap:.4rem; font-size:.85rem; margin-bottom:1rem; color:var(--text-muted); }
+    .breadcrumb a { color:var(--blue); text-decoration:none; }
+    .breadcrumb a:hover { text-decoration:underline; }
+    .bc-sep { color:var(--border); font-size:1.1rem; }
+
+    /* ── Layout ── */
+    .cols-itens { display:grid; grid-template-columns:320px 1fr; gap:1.5rem; align-items:start; }
+    @media (max-width:768px) { .cols-itens { grid-template-columns:1fr; } }
+
+    /* ── Lista de itens ── */
+    .itens-list { list-style:none; margin:0; padding:.75rem 1rem; display:flex; flex-direction:column; gap:.6rem; }
+
+    .item-row {
+      display:flex; align-items:flex-start; gap:.75rem; padding:.9rem 1rem;
+      background:var(--surface,#f8fafd); border:1.5px solid var(--border); border-radius:var(--radius);
+      transition:box-shadow .2s;
+    }
+    .item-row:hover { box-shadow:0 3px 12px rgba(3,110,192,.1); }
+
+    .item-num {
+      width:1.8rem; height:1.8rem; border-radius:50%; background:var(--blue); color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; flex-shrink:0;
+    }
+
+    .item-info { flex:1; min-width:0; }
+    .item-pergunta { margin:0 0 .35rem; font-size:.92rem; font-weight:600; color:var(--text); line-height:1.4; }
+    .item-ajuda { margin:0 0 .5rem; font-size:.8rem; color:var(--text-muted); line-height:1.4; }
+
+    .item-meta { display:flex; flex-wrap:wrap; gap:.3rem; align-items:center; }
+
+    .tag {
+      font-size:.68rem; font-weight:600; border-radius:999px; padding:.1rem .45rem;
+      white-space:nowrap;
+    }
+    .tag-na    { background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
+    .tag-resp  { background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; }
+
+    .item-status { font-size:.7rem; font-weight:600; border-radius:999px; padding:.1rem .45rem; }
+    .status-ativo   { background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
+    .status-inativo { background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; }
+
+    .item-actions { display:flex; flex-direction:column; gap:.35rem; flex-shrink:0; }
+
+    /* ── Checkbox customizado ── */
+    .checkbox-label {
+      display:inline-flex; align-items:center; gap:.6rem; cursor:pointer;
+      font-size:.9rem; color:var(--text); user-select:none;
+    }
+    .checkbox-label input[type="checkbox"] { display:none; }
+    .checkbox-custom {
+      width:1.1rem; height:1.1rem; border:2px solid var(--border); border-radius:.3rem;
+      background:var(--white); transition:border-color .15s, background .15s; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .checkbox-label input:checked + .checkbox-custom {
+      background:var(--blue); border-color:var(--blue);
+    }
+    .checkbox-label input:checked + .checkbox-custom::after {
+      content:''; width:.35rem; height:.6rem; border:2px solid #fff; border-top:none; border-left:none;
+      transform:rotate(45deg); display:block; margin-top:-.1rem;
+    }
+    .field-hint { font-size:.78rem; color:var(--text-muted); margin:.35rem 0 0; }
+
+    /* ── Badges topo ── */
+    .chk-codigo { font-size:.72rem; font-weight:700; background:var(--blue-light); color:var(--blue);
+      border:1px solid var(--blue-mid,#bfdbfe); border-radius:999px; padding:.15rem .55rem; letter-spacing:.04em; }
+    .chk-tipo { font-size:.7rem; font-weight:700; border-radius:999px; padding:.15rem .55rem; }
+    .chk-tipo-geral      { background:#ede9fe; color:#7c3aed; border:1px solid #c4b5fd; }
+    .chk-tipo-especifica { background:#fef9c3; color:#a16207; border:1px solid #fde68a; }
+
+    /* ── Btn sizes ── */
+    .btn-xs { font-size:.75rem; padding:.25rem .6rem; white-space:nowrap; }
+    .btn-sm { font-size:.8rem; padding:.35rem .75rem; }
+
+    /* ── Modal ── */
+    .chk-modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000;
+      display:flex; align-items:center; justify-content:center;
+      backdrop-filter:blur(3px); animation:fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .chk-modal {
+      background:var(--white); border-radius:var(--radius-lg,.75rem); width:100%;
+      box-shadow:0 20px 60px rgba(0,0,0,.2); animation:slideUp .2s ease; overflow:hidden;
+    }
+    @keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:none;opacity:1} }
+    .chk-modal-header { display:flex; align-items:center; justify-content:space-between;
+      padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); }
+    .chk-modal-header h3 { margin:0; font-size:1.05rem; }
+    .chk-modal-close { background:none; border:none; font-size:1.1rem; cursor:pointer;
+      color:var(--text-muted); padding:.2rem .4rem; border-radius:.3rem; transition:background .15s; }
+    .chk-modal-close:hover { background:var(--surface); }
+    .chk-modal-body  { padding:1.25rem 1.5rem; }
+    .chk-modal-footer { padding:1rem 1.5rem; border-top:1px solid var(--border);
+      display:flex; justify-content:flex-end; gap:.75rem; }
+
+    .form-row-2 { display:flex; gap:1rem; align-items:flex-end; }
+    .form-row-2 .form-group { flex:1; }
+
+    .req { color:var(--danger); }
+
+    select, .form-group textarea {
+      width:100%; padding:.65rem .9rem; font-size:.925rem; font-family:inherit;
+      color:var(--text); background:var(--white); border:1.5px solid var(--border);
+      border-radius:var(--radius); outline:none;
+      transition:border-color var(--transition),box-shadow var(--transition); box-sizing:border-box;
+    }
+    select:focus, .form-group textarea:focus {
+      border-color:var(--blue); box-shadow:0 0 0 3px rgba(3,110,192,.12);
+    }
+    .form-group textarea { resize:vertical; }
+  </style>
+
+  <script>
+    /* ─── Modal editar ─────────────────────────────────── */
+    function abrirModalEditar(id, pergunta, ajuda, na, status) {
+      document.getElementById('edit-pergunta').value = pergunta || '';
+      document.getElementById('edit-ajuda').value    = ajuda    || '';
+      document.getElementById('edit-na').checked     = na === 'true';
+      document.getElementById('edit-status').value   = status   || 'ativo';
+      document.getElementById('form-editar').action  =
+        '/admin/checklists/<%= checklist.id %>/secoes/<%= secao.id %>/itens/' + id + '/editar';
+      document.getElementById('modal-editar').style.display = 'flex';
+    }
+    function fecharModal() { document.getElementById('modal-editar').style.display = 'none'; }
+    function fecharFora(e) { if (e.target.id === 'modal-editar') fecharModal(); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+    /* ─── Confirmar exclusao ─────────────────────────── */
+    function confirmarExclusao(id) {
+      Modal.confirm({
+        title: 'Excluir Item',
+        message: 'Deseja excluir este item? Esta acao nao pode ser desfeita.',
+        confirmText: 'Excluir',
+        onConfirm: () => {
+          const form = document.getElementById('form-deletar');
+          form.action = '/admin/checklists/<%= checklist.id %>/secoes/<%= secao.id %>/itens/' + id + '/deletar';
+          form.submit();
+        }
+      });
+    }
+
+    /* ─── Delegacao: botoes com data-* ─────────────── */
+    document.addEventListener('click', function (e) {
+      const btnEdit = e.target.closest('.btn-editar-item');
+      if (btnEdit) {
+        const d = btnEdit.dataset;
+        abrirModalEditar(d.id, d.pergunta, d.ajuda, d.na, d.status);
+        return;
+      }
+      const btnDel = e.target.closest('.btn-excluir-item');
+      if (btnDel) {
+        confirmarExclusao(btnDel.dataset.id);
+      }
+    });
+  </script>
+
+</body>
+</html>

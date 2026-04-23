@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title>Checklists — FoodTech</title>
+</head>
+<body>
+
+  <%- include('../partials/_admin-layout', { currentPage: 'checklists' }) %>
+
+  <div class="app-content">
+    <div class="page-header fade-up">
+      <h1>Checklists</h1>
+      <p>Crie e gerencie os checklists de auditoria de rotulagem.</p>
+    </div>
+
+    <!-- Stats card -->
+    <div class="stats-row fade-up" style="margin-bottom:1.5rem;">
+      <div class="stat-card">
+        <span class="stat-icon">📋</span>
+        <div>
+          <div class="stat-val"><%= checklists.length %></div>
+          <div class="stat-label">Total</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">✅</span>
+        <div>
+          <div class="stat-val"><%= checklists.filter(c => c.status === 'ativo').length %></div>
+          <div class="stat-label">Ativos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🌐</span>
+        <div>
+          <div class="stat-val"><%= checklists.filter(c => c.tipo === 'GERAL').length %></div>
+          <div class="stat-label">Gerais</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🎯</span>
+        <div>
+          <div class="stat-val"><%= checklists.filter(c => c.tipo === 'ESPECIFICA').length %></div>
+          <div class="stat-label">Específicas</div>
+        </div>
+      </div>
+    </div>
+
+    <%
+      let _type='', _title='', _msg='', _ac='true';
+      if      (sucesso==='checklist_criado')     { _type='success'; _title='Criado';      _msg='Checklist criado com sucesso!'; }
+      else if (sucesso==='checklist_atualizado') { _type='success'; _title='Atualizado';  _msg='Checklist atualizado com sucesso!'; }
+      else if (sucesso==='checklist_deletado')   { _type='success'; _title='Removido';    _msg='Checklist removido com sucesso!'; }
+      else if (erro==='nao_encontrado')          { _type='error';   _title='Não encontrado'; _msg='Checklist não encontrado.'; _ac='false'; }
+      else if (erro==='erro_interno')            { _type='error';   _title='Erro interno';   _msg='Ocorreu um erro inesperado. Tente novamente.'; _ac='false'; }
+    %>
+    <% if (_type) { %>
+      <div id="page-notify" hidden
+        data-type="<%= _type %>"
+        data-title="<%= _title %>"
+        data-message="<%= _msg %>"
+        data-autoclose="<%= _ac %>"></div>
+    <% } %>
+
+    <!-- ── Formulário de criação ── -->
+    <div class="card fade-up d1" style="max-width:680px; margin-bottom:2rem;">
+      <div class="card-header">
+        <h2>Novo Checklist</h2>
+      </div>
+      <div class="card-body">
+        <form action="/admin/checklists" method="POST" id="form-criar" class="chk-form">
+          <div class="form-row">
+            <div class="form-group" style="flex:2;">
+              <label for="nome">Nome <span class="req">*</span></label>
+              <input type="text" id="nome" name="nome" placeholder="ex: Checklist de Rotulagem Geral" required maxlength="150">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="tipo">Tipo <span class="req">*</span></label>
+              <select id="tipo" name="tipo" required>
+                <option value="GERAL" selected>🌐 Geral</option>
+                <option value="ESPECIFICA">🎯 Específica</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1;">
+              <label for="versao">Versão</label>
+              <input type="text" id="versao" name="versao" placeholder="1.0" maxlength="20" value="1.0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="descricao">Descrição</label>
+            <textarea id="descricao" name="descricao" rows="2" placeholder="Descreva o objetivo deste checklist..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.25rem;">
+            ➕ Criar Checklist
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── Cards de checklists existentes ── -->
+    <% if (checklists.length === 0) { %>
+      <div class="empty-state fade-up d2">
+        <div class="empty-state-icon">📋</div>
+        <p>Nenhum checklist cadastrado ainda.<br>Use o formulário acima para adicionar.</p>
+      </div>
+    <% } else { %>
+      <div class="chk-grid fade-up d2">
+        <% checklists.forEach(function(chk) { %>
+          <div class="chk-card" data-id="<%= chk.id %>">
+            <!-- Cabeçalho do card -->
+            <div class="chk-card-top">
+              <div class="chk-card-meta">
+                <span class="chk-codigo"><%= chk.codigo %></span>
+                <span class="chk-tipo chk-tipo-<%= chk.tipo.toLowerCase() %>"><%= chk.tipo %></span>
+                <span class="chk-versao">v<%= chk.versao %></span>
+              </div>
+              <span class="status-badge <%= chk.status === 'ativo' ? 'status-ativo' : 'status-inativo' %>">
+                <%= chk.status === 'ativo' ? '✅ Ativo' : '⛔ Inativo' %>
+              </span>
+            </div>
+
+            <h3 class="chk-card-nome"><%= chk.nome %></h3>
+            <p class="chk-card-desc"><%= chk.descricao || 'Sem descrição.' %></p>
+
+            <!-- Ações do card -->
+            <div class="chk-card-actions">
+              <a href="/admin/checklists/<%= chk.id %>/secoes" class="btn btn-primary btn-sm">
+                📂 Entrar nas Seções
+              </a>
+              <button class="btn btn-ghost btn-sm btn-editar-chk"
+                data-id="<%= chk.id %>"
+                data-nome="<%= (chk.nome || '').replace(/"/g, '&quot;') %>"
+                data-tipo="<%= chk.tipo %>"
+                data-versao="<%= (chk.versao || '').replace(/"/g, '&quot;') %>"
+                data-descricao="<%= (chk.descricao || '').replace(/"/g, '&quot;') %>"
+                data-status="<%= chk.status %>">
+                ✏️ Editar
+              </button>
+              <button class="btn btn-danger btn-sm btn-excluir-chk"
+                data-id="<%= chk.id %>"
+                data-nome="<%= (chk.nome || '').replace(/"/g, '&quot;') %>">
+                🗑️ Excluir
+              </button>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div><!-- /.app-content -->
+
+  <!-- ── Modal de Edição ── -->
+  <div id="modal-editar" class="chk-modal-overlay" style="display:none;" onclick="fecharModalEditarFora(event)">
+    <div class="chk-modal">
+      <div class="chk-modal-header">
+        <h3>✏️ Editar Checklist</h3>
+        <button class="chk-modal-close" onclick="fecharModalEditar()">✕</button>
+      </div>
+      <form id="form-editar" method="POST">
+        <div class="chk-modal-body">
+          <div class="form-row">
+            <div class="form-group" style="flex:2;">
+              <label>Nome <span class="req">*</span></label>
+              <input type="text" id="edit-nome" name="nome" required maxlength="150">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Tipo <span class="req">*</span></label>
+              <select id="edit-tipo" name="tipo" required>
+                <option value="GERAL">🌐 Geral</option>
+                <option value="ESPECIFICA">🎯 Específica</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1;">
+              <label>Versão</label>
+              <input type="text" id="edit-versao" name="versao" maxlength="20">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Status</label>
+              <select id="edit-status" name="status">
+                <option value="ativo">✅ Ativo</option>
+                <option value="inativo">⛔ Inativo</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Descrição</label>
+            <textarea id="edit-descricao" name="descricao" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="chk-modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="fecharModalEditar()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Form oculto para exclusão -->
+  <form id="form-deletar" method="POST" style="display:none;"></form>
+
+  <style>
+    /* ── Page layout ── */
+    .chk-form .form-row {
+      display: flex;
+      gap: 1rem;
+    }
+    .chk-form .form-row .form-group { flex: 1; }
+
+    /* ── Grid de cards ── */
+    .chk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ── Card ── */
+    .chk-card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg, .75rem);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .chk-card:hover {
+      box-shadow: 0 6px 24px rgba(3,110,192,.1);
+      transform: translateY(-2px);
+    }
+
+    .chk-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .4rem;
+    }
+    .chk-card-meta { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+
+    .chk-codigo {
+      font-size: .72rem;
+      font-weight: 700;
+      background: var(--blue-light);
+      color: var(--blue);
+      border: 1px solid var(--blue-mid, #bfdbfe);
+      border-radius: 999px;
+      padding: .15rem .55rem;
+      letter-spacing: .04em;
+    }
+
+    .chk-tipo {
+      font-size: .7rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: .15rem .55rem;
+      letter-spacing: .04em;
+    }
+    .chk-tipo-geral     { background:#ede9fe; color:#7c3aed; border:1px solid #c4b5fd; }
+    .chk-tipo-especifica { background:#fef9c3; color:#a16207; border:1px solid #fde68a; }
+
+    .chk-versao { font-size: .72rem; color: var(--text-muted); }
+
+    .chk-card-nome {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.3;
+    }
+    .chk-card-desc {
+      font-size: .85rem;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .chk-card-actions {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-top: .25rem;
+    }
+
+    /* ── Status badges ── */
+    .status-badge {
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: 999px;
+      font-size: .73rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .status-ativo   { background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
+    .status-inativo { background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; }
+
+    /* ── Btn sizes ── */
+    .btn-sm { font-size:.8rem; padding:.35rem .75rem; }
+
+    /* ── Modal ── */
+    .chk-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .chk-modal {
+      background: var(--white);
+      border-radius: var(--radius-lg,.75rem);
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      animation: slideUp .2s ease;
+      overflow: hidden;
+    }
+    @keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:none;opacity:1} }
+
+    .chk-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .chk-modal-header h3 { margin:0; font-size:1.05rem; }
+    .chk-modal-close {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: .2rem .4rem;
+      border-radius: .3rem;
+      transition: background .15s;
+    }
+    .chk-modal-close:hover { background: var(--surface); }
+
+    .chk-modal-body { padding: 1.25rem 1.5rem; }
+    .chk-modal-body .form-row { display:flex; gap:1rem; }
+    .chk-modal-body .form-row .form-group { flex:1; }
+
+    .chk-modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: .75rem;
+    }
+
+    .req { color: var(--danger); }
+
+    /* ── Selects e textareas dentro de formulários desta view ── */
+    select, .form-group textarea {
+      width: 100%;
+      padding: .65rem .9rem;
+      font-size: .925rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      box-sizing: border-box;
+    }
+    select:focus, .form-group textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(3,110,192,.12);
+    }
+    .form-group textarea { resize: vertical; }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: .75rem 1.25rem;
+      min-width: 110px;
+      flex: 1;
+    }
+    .stat-icon { font-size: 1.5rem; }
+    .stat-val  { font-size: 1.4rem; font-weight: 700; color: var(--text); line-height: 1; }
+    .stat-label { font-size: .75rem; color: var(--text-muted); margin-top: .15rem; }
+  </style>
+
+  <script>
+    // ── Modal editar ──────────────────────────────────────────
+    function abrirModalEditar(id, nome, tipo, versao, descricao, status) {
+      document.getElementById('edit-nome').value      = nome     || '';
+      document.getElementById('edit-tipo').value      = tipo     || 'GERAL';
+      document.getElementById('edit-versao').value    = versao   || '1.0';
+      document.getElementById('edit-descricao').value = descricao || '';
+      document.getElementById('edit-status').value    = status   || 'ativo';
+      document.getElementById('form-editar').action   = '/admin/checklists/' + id + '/editar';
+      document.getElementById('modal-editar').style.display = 'flex';
+    }
+
+    function fecharModalEditar() {
+      document.getElementById('modal-editar').style.display = 'none';
+    }
+
+    function fecharModalEditarFora(e) {
+      if (e.target === document.getElementById('modal-editar')) fecharModalEditar();
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') fecharModalEditar();
+    });
+
+    // ── Confirmar exclusao ────────────────────────────────────
+    function confirmarExclusao(id, nome) {
+      Modal.confirm({
+        title: 'Excluir Checklist',
+        message: 'Deseja excluir o checklist <strong>' + nome + '</strong>?<br><small style="color:var(--text-muted)">Todas as secoes e itens serao removidos.</small>',
+        confirmText: 'Excluir',
+        onConfirm: () => {
+          const form = document.getElementById('form-deletar');
+          form.action = '/admin/checklists/' + id + '/deletar';
+          form.submit();
+        }
+      });
+    }
+
+    // ── Delegacao: botoes com data-* ─────────────────────────
+    document.addEventListener('click', function (e) {
+      const btnEdit = e.target.closest('.btn-editar-chk');
+      if (btnEdit) {
+        const d = btnEdit.dataset;
+        abrirModalEditar(d.id, d.nome, d.tipo, d.versao, d.descricao, d.status);
+        return;
+      }
+      const btnDel = e.target.closest('.btn-excluir-chk');
+      if (btnDel) {
+        const d = btnDel.dataset;
+        confirmarExclusao(d.id, d.nome);
+      }
+    });
+  </script>
+
+</body>
+</html>
