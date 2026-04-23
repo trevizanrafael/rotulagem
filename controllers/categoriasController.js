@@ -12,7 +12,8 @@ const getCategorias = async (req, res) => {
     const categorias = await CategoriaProduto.findAll({ order: [['createdAt', 'DESC']] });
     const sucesso = req.query.success || null;
     const erro = req.query.error || null;
-    res.render('admin/categorias', { categorias, sucesso, erro, editando: null });
+    const count = req.query.count || null;
+    res.render('admin/categorias', { categorias, sucesso, erro, editando: null, count });
   } catch (err) {
     console.error(err);
     res.redirect('/admin/dashboard?error=erro_interno');
@@ -25,7 +26,7 @@ const getEditarCategoria = async (req, res) => {
     const categorias = await CategoriaProduto.findAll({ order: [['createdAt', 'DESC']] });
     const editando = await CategoriaProduto.findByPk(req.params.id);
     if (!editando) return res.redirect('/admin/categorias?error=nao_encontrado');
-    res.render('admin/categorias', { categorias, sucesso: null, erro: null, editando });
+    res.render('admin/categorias', { categorias, sucesso: null, erro: null, editando, count: null });
   } catch (err) {
     console.error(err);
     res.redirect('/admin/categorias?error=erro_interno');
@@ -90,6 +91,49 @@ const toggleStatus = async (req, res) => {
   }
 };
 
+// POST /admin/categorias/importar - Importa categorias via JSON (fetch)
+const importarCategorias = async (req, res) => {
+  const { categorias: lista } = req.body;
+  if (!Array.isArray(lista) || lista.length === 0) {
+    return res.json({ ok: false, mensagem: 'Nenhum dado recebido.' });
+  }
+
+  let importados = 0, ignorados = 0;
+  for (const item of lista) {
+    if (!item.nome || !item.nome.trim()) { ignorados++; continue; }
+    try {
+      const [, created] = await CategoriaProduto.findOrCreate({
+        where: { nome: item.nome.trim() },
+        defaults: {
+          descricao: item.descricao?.trim() || null,
+          status: ['ativo', 'inativo'].includes(item.status) ? item.status : 'ativo',
+        },
+      });
+      if (created) importados++; else ignorados++;
+    } catch (e) {
+      ignorados++;
+    }
+  }
+  res.json({ ok: true, importados, ignorados });
+};
+
+// POST /admin/categorias/deletar-selecionados - Remove múltiplas categorias
+const deletarSelecionados = async (req, res) => {
+  let ids = req.body.ids;
+  if (!ids) return res.redirect('/admin/categorias?error=nenhum_selecionado');
+  if (!Array.isArray(ids)) ids = [ids];
+  ids = ids.map(Number).filter(Boolean);
+  if (ids.length === 0) return res.redirect('/admin/categorias?error=nenhum_selecionado');
+
+  try {
+    await CategoriaProduto.destroy({ where: { id: ids } });
+    res.redirect(`/admin/categorias?success=selecionados_deletados&count=${ids.length}`);
+  } catch (err) {
+    console.error(err);
+    res.redirect('/admin/categorias?error=erro_interno');
+  }
+};
+
 module.exports = {
   requireAdmin,
   getCategorias,
@@ -98,4 +142,7 @@ module.exports = {
   putCategoria,
   deleteCategoria,
   toggleStatus,
+  importarCategorias,
+  deletarSelecionados,
 };
+

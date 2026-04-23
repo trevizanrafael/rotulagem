@@ -15,6 +15,8 @@ router.post('/logout', adminController.postLogout);
 // Categorias de produtos
 router.get('/categorias', requireAdmin, categoriasController.getCategorias);
 router.post('/categorias', requireAdmin, categoriasController.postCategoria);
+router.post('/categorias/importar', requireAdmin, categoriasController.importarCategorias);
+router.post('/categorias/deletar-selecionados', requireAdmin, categoriasController.deletarSelecionados);
 router.get('/categorias/:id/editar', requireAdmin, categoriasController.getEditarCategoria);
 router.post('/categorias/:id', requireAdmin, categoriasController.putCategoria);
 router.post('/categorias/:id/deletar', requireAdmin, categoriasController.deleteCategoria);
