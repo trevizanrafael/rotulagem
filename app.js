@@ -6,6 +6,10 @@ const bcrypt = require('bcryptjs');
 const sequelize = require('./config/database');
 const User = require('./models/User');
 require('./models/CategoriaProduto'); // registrar model para sync
+require('./models/SubcategoriaProduto');
+require('./models/Checklist');
+require('./models/ChecklistSecao');
+require('./models/ChecklistItem');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 

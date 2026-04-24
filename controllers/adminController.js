@@ -26,11 +26,19 @@ const postLogin = async (req, res) => {
 };
 
 // GET /admin/dashboard - Painel do admin
-const getDashboard = (req, res) => {
+const getDashboard = async (req, res) => {
   if (!req.session.isAdmin) {
     return res.redirect('/admin/login');
   }
-  res.render('admin/dashboard');
+  try {
+    const Checklist = require('../models/Checklist');
+    const totalChecklists = await Checklist.count();
+    const ativosChecklists = await Checklist.count({ where: { status: 'ativo' } });
+    res.render('admin/dashboard', { totalChecklists, ativosChecklists });
+  } catch (err) {
+    console.error(err);
+    res.render('admin/dashboard', { totalChecklists: 0, ativosChecklists: 0 });
+  }
 };
 
 // GET /admin/usuarios - Lista e cadastro de usuários
