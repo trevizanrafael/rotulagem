@@ -29,8 +29,10 @@ const getChecklists = async (req, res) => {
   try {
     const checklists = await Checklist.findAll({ order: [['createdAt', 'DESC']] });
     const sucesso = req.query.success || null;
-    const erro = req.query.error || null;
-    res.render('admin/checklists', { checklists, sucesso, erro });
+    const erro    = req.query.error  || null;
+    const nome    = req.query.nome   || '';
+    const codigo  = req.query.codigo || '';
+    res.render('admin/checklists', { checklists, sucesso, erro, nome, codigo });
   } catch (err) {
     console.error(err);
     res.redirect('/admin/dashboard?error=erro_interno');
@@ -82,6 +84,97 @@ const deleteChecklist = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.redirect('/admin/checklists?error=erro_interno');
+  }
+};
+
+/* Exporta um checklist completo (secoes + itens) como JSON para download */
+const exportarChecklist = async (req, res) => {
+  try {
+    const chk = await Checklist.findByPk(req.params.id, {
+      include: [{
+        model: ChecklistSecao,
+        as: 'secoes',
+        include: [{ model: ChecklistItem, as: 'itens' }],
+      }],
+    });
+    if (!chk) return res.redirect('/admin/checklists?error=nao_encontrado');
+
+    const payload = {
+      _exportadoEm: new Date().toISOString(),
+      nome:     chk.nome,
+      tipo:     chk.tipo,
+      descricao: chk.descricao || null,
+      status:   chk.status,
+      secoes: (chk.secoes || [])
+        .sort((a, b) => a.ordem - b.ordem)
+        .map(sec => ({
+          titulo:    sec.titulo,
+          descricao: sec.descricao || null,
+          status:    sec.status,
+          itens: (sec.itens || []).map(item => ({
+            pergunta:           item.pergunta,
+            descricaoAjuda:     item.descricaoAjuda || null,
+            aceitaNaoAplicavel: item.aceitaNaoAplicavel,
+            status:             item.status,
+          })),
+        })),
+    };
+
+    const slug = chk.nome.replace(/[^a-z0-9]/gi, '_').toLowerCase().slice(0, 40);
+    const filename = `${chk.codigo}_${slug}.json`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.send(JSON.stringify(payload, null, 2));
+  } catch (err) {
+    console.error(err);
+    res.redirect('/admin/checklists?error=erro_interno');
+  }
+};
+
+/* Importa um checklist completo a partir de JSON enviado via fetch */
+const importarChecklist = async (req, res) => {
+  const data = req.body.checklist;
+  if (!data || !data.nome) {
+    return res.json({ ok: false, mensagem: 'Arquivo inválido ou sem nome de checklist.' });
+  }
+  try {
+    const codigo = await gerarCodigo();
+    const chk = await Checklist.create({
+      codigo,
+      nome:     data.nome.trim(),
+      tipo:     ['GERAL', 'ESPECIFICA'].includes(data.tipo) ? data.tipo : 'GERAL',
+      descricao: data.descricao?.trim() || null,
+      status:   data.status === 'inativo' ? 'inativo' : 'ativo',
+    });
+
+    const secoes = Array.isArray(data.secoes) ? data.secoes : [];
+    for (let i = 0; i < secoes.length; i++) {
+      const sd = secoes[i];
+      if (!sd.titulo) continue;
+      const sec = await ChecklistSecao.create({
+        checklistId: chk.id,
+        titulo:    sd.titulo.trim(),
+        descricao: sd.descricao?.trim() || null,
+        ordem:     i,
+        status:    sd.status === 'inativo' ? 'inativo' : 'ativo',
+      });
+      const itens = Array.isArray(sd.itens) ? sd.itens : [];
+      for (const id of itens) {
+        if (!id.pergunta) continue;
+        await ChecklistItem.create({
+          checklistSecaoId:   sec.id,
+          pergunta:           id.pergunta.trim(),
+          descricaoAjuda:     id.descricaoAjuda?.trim() || null,
+          aceitaNaoAplicavel: id.aceitaNaoAplicavel !== false,
+          status:             id.status === 'inativo' ? 'inativo' : 'ativo',
+        });
+      }
+    }
+
+    res.json({ ok: true, codigo: chk.codigo, nome: chk.nome, secoes: secoes.length });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, mensagem: 'Erro interno ao importar o checklist.' });
   }
 };
 
@@ -255,6 +348,8 @@ module.exports = {
   postChecklist,
   putChecklist,
   deleteChecklist,
+  exportarChecklist,
+  importarChecklist,
   // secoes
   getSecoes,
   postSecao,

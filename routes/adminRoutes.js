@@ -40,6 +40,8 @@ router.post('/subcategorias/:id/status', requireAdmin, subcategoriasController.t
 // ── Checklists ──────────────────────────────────────────────
 router.get('/checklists', checklistsController.requireAdmin, checklistsController.getChecklists);
 router.post('/checklists', checklistsController.requireAdmin, checklistsController.postChecklist);
+router.post('/checklists/importar', checklistsController.requireAdmin, checklistsController.importarChecklist);
+router.get('/checklists/:id/exportar', checklistsController.requireAdmin, checklistsController.exportarChecklist);
 router.post('/checklists/:id/editar', checklistsController.requireAdmin, checklistsController.putChecklist);
 router.post('/checklists/:id/deletar', checklistsController.requireAdmin, checklistsController.deleteChecklist);
 

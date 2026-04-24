@@ -51,7 +51,8 @@
       if      (sucesso==='checklist_criado')     { _type='success'; _title='Criado';      _msg='Checklist criado com sucesso!'; }
       else if (sucesso==='checklist_atualizado') { _type='success'; _title='Atualizado';  _msg='Checklist atualizado com sucesso!'; }
       else if (sucesso==='checklist_deletado')   { _type='success'; _title='Removido';    _msg='Checklist removido com sucesso!'; }
-      else if (erro==='nao_encontrado')          { _type='error';   _title='Não encontrado'; _msg='Checklist não encontrado.'; _ac='false'; }
+      else if (sucesso==='checklist_importado')  { _type='success'; _title='Importado';   _msg=(codigo ? codigo + ' \u2014 ' : '') + (nome || 'Checklist') + ' importado com sucesso!'; }
+      else if (erro==='nao_encontrado')          { _type='error';   _title='N\u00e3o encontrado'; _msg='Checklist n\u00e3o encontrado.'; _ac='false'; }
       else if (erro==='erro_interno')            { _type='error';   _title='Erro interno';   _msg='Ocorreu um erro inesperado. Tente novamente.'; _ac='false'; }
     %>
     <% if (_type) { %>
@@ -64,8 +65,12 @@
 
     <!-- ── Formulário de criação ── -->
     <div class="card fade-up d1" style="margin-bottom:2rem;">
-      <div class="card-header">
+      <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
         <h2>Novo Checklist</h2>
+        <button type="button" id="btn-importar" class="btn btn-secondary btn-sm">
+          📥 Importar JSON
+        </button>
+        <input type="file" id="input-importar" accept=".json" style="display:none;">
       </div>
       <div class="card-body">
         <form action="/admin/checklists" method="POST" id="form-criar" class="chk-form">
@@ -121,6 +126,9 @@
             <div class="chk-card-actions">
               <a href="/admin/checklists/<%= chk.id %>/secoes" class="btn btn-primary btn-sm">
                 📂 Entrar nas Seções
+              </a>
+              <a href="/admin/checklists/<%= chk.id %>/exportar" class="btn btn-secondary btn-sm" title="Exportar checklist completo como JSON">
+                📤 Exportar
               </a>
               <button class="btn btn-ghost btn-sm btn-editar-chk"
                 data-id="<%= chk.id %>"
@@ -442,6 +450,59 @@
         confirmarExclusao(d.id, d.nome);
       }
     });
+
+    // ── Importar JSON ──────────────────────────────────────────
+    const btnImportar  = document.getElementById('btn-importar');
+    const inputImportar = document.getElementById('input-importar');
+
+    if (btnImportar) {
+      btnImportar.addEventListener('click', () => inputImportar.click());
+
+      inputImportar.addEventListener('change', async function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        // Valida tipo
+        if (!file.name.endsWith('.json')) {
+          Modal.notify({ type: 'error', title: 'Arquivo invalido', message: 'Selecione um arquivo .json exportado pelo sistema.' });
+          return;
+        }
+
+        btnImportar.disabled = true;
+        btnImportar.textContent = 'Importando...';
+
+        try {
+          const text = await file.text();
+          let data;
+          try { data = JSON.parse(text); } catch {
+            Modal.notify({ type: 'error', title: 'JSON invalido', message: 'Nao foi possivel ler o arquivo. Verifique se e um JSON valido.' });
+            return;
+          }
+
+          const resp = await fetch('/admin/checklists/importar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checklist: data }),
+          });
+          const result = await resp.json();
+
+          if (result.ok) {
+            setTimeout(() => {
+              window.location.href = '/admin/checklists?success=checklist_importado&nome=' + encodeURIComponent(result.nome) + '&codigo=' + encodeURIComponent(result.codigo);
+            }, 400);
+          } else {
+            Modal.notify({ type: 'error', title: 'Erro ao importar', message: result.mensagem || 'Erro desconhecido.' });
+          }
+        } catch (err) {
+          console.error(err);
+          Modal.notify({ type: 'error', title: 'Erro', message: 'Nao foi possivel enviar o arquivo.' });
+        } finally {
+          btnImportar.disabled = false;
+          btnImportar.textContent = 'Importar JSON';
+          inputImportar.value = '';
+        }
+      });
+    }
   </script>
 
 </body>
