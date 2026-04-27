@@ -1,6 +1,9 @@
 const Checklist = require('../models/Checklist');
 const ChecklistSecao = require('../models/ChecklistSecao');
 const ChecklistItem = require('../models/ChecklistItem');
+const SubcategoriaProduto = require('../models/SubcategoriaProduto');
+// Registra as associações N:N entre Checklist e SubcategoriaProduto
+require('../models/SubcategoriaChecklist');
 const { Op } = require('sequelize');
 
 const requireAdmin = (req, res, next) => {
@@ -27,7 +30,15 @@ async function gerarCodigo() {
 
 const getChecklists = async (req, res) => {
   try {
-    const checklists = await Checklist.findAll({ order: [['createdAt', 'DESC']] });
+    const checklists = await Checklist.findAll({
+      order: [['createdAt', 'DESC']],
+      include: [{
+        model: SubcategoriaProduto,
+        as: 'subcategorias',
+        attributes: ['id', 'nome'],
+        through: { attributes: [] },
+      }],
+    });
     const sucesso = req.query.success || null;
     const erro    = req.query.error  || null;
     const nome    = req.query.nome   || '';

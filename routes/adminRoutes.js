@@ -36,6 +36,10 @@ router.get('/subcategorias/:id/editar', requireAdmin, subcategoriasController.ge
 router.post('/subcategorias/:id', requireAdmin, subcategoriasController.putSubcategoria);
 router.post('/subcategorias/:id/deletar', requireAdmin, subcategoriasController.deleteSubcategoria);
 router.post('/subcategorias/:id/status', requireAdmin, subcategoriasController.toggleStatusSub);
+// Checklists vinculados a subcategorias (JSON)
+router.get('/subcategorias/:id/checklists', requireAdmin, subcategoriasController.getChecklistsDaSub);
+router.post('/subcategorias/:id/checklists/vincular', requireAdmin, subcategoriasController.vincularChecklist);
+router.post('/subcategorias/:id/checklists/desvincular', requireAdmin, subcategoriasController.desvincularChecklist);
 
 // ── Checklists ──────────────────────────────────────────────
 router.get('/checklists', checklistsController.requireAdmin, checklistsController.getChecklists);

@@ -1,5 +1,8 @@
 const SubcategoriaProduto = require('../models/SubcategoriaProduto');
 const CategoriaProduto = require('../models/CategoriaProduto');
+const Checklist = require('../models/Checklist');
+// Importar o modelo associativo garante que as associações N:N sejam registradas no Sequelize
+require('../models/SubcategoriaChecklist');
 
 const requireAdmin = (req, res, next) => {
   if (!req.session.isAdmin) return res.redirect('/admin/login');
@@ -9,22 +12,36 @@ const requireAdmin = (req, res, next) => {
 // Helpers reutilizáveis
 const _findAll = () => SubcategoriaProduto.findAll({
   order: [['createdAt', 'DESC']],
-  include: [{ model: CategoriaProduto, as: 'categoria', attributes: ['id', 'nome'] }],
+  include: [
+    { model: CategoriaProduto, as: 'categoria', attributes: ['id', 'nome'] },
+    { model: Checklist, as: 'checklists', attributes: ['id', 'codigo', 'nome', 'tipo', 'status'], through: { attributes: [] } },
+  ],
 });
+
 const _findCategorias = () => CategoriaProduto.findAll({
   where: { status: 'ativo' },
   order: [['nome', 'ASC']],
   attributes: ['id', 'nome'],
 });
 
+const _findChecklists = () => Checklist.findAll({
+  where: { status: 'ativo' },
+  order: [['codigo', 'ASC']],
+  attributes: ['id', 'codigo', 'nome', 'tipo'],
+});
+
 // GET /admin/subcategorias
 const getSubcategorias = async (req, res) => {
   try {
-    const [subcategorias, categorias] = await Promise.all([_findAll(), _findCategorias()]);
+    const [subcategorias, categorias, todosChecklists] = await Promise.all([
+      _findAll(),
+      _findCategorias(),
+      _findChecklists(),
+    ]);
     const sucesso = req.query.success || null;
     const erro = req.query.error || null;
     const count = req.query.count || null;
-    res.render('admin/subcategorias', { subcategorias, categorias, sucesso, erro, editando: null, count });
+    res.render('admin/subcategorias', { subcategorias, categorias, todosChecklists, sucesso, erro, editando: null, count });
   } catch (err) {
     console.error(err);
     res.redirect('/admin/dashboard?error=erro_interno');
@@ -34,15 +51,19 @@ const getSubcategorias = async (req, res) => {
 // GET /admin/subcategorias/:id/editar
 const getEditarSubcategoria = async (req, res) => {
   try {
-    const [subcategorias, categorias, editando] = await Promise.all([
+    const [subcategorias, categorias, todosChecklists, editando] = await Promise.all([
       _findAll(),
       _findCategorias(),
+      _findChecklists(),
       SubcategoriaProduto.findByPk(req.params.id, {
-        include: [{ model: CategoriaProduto, as: 'categoria', attributes: ['id', 'nome'] }],
+        include: [
+          { model: CategoriaProduto, as: 'categoria', attributes: ['id', 'nome'] },
+          { model: Checklist, as: 'checklists', attributes: ['id', 'codigo', 'nome', 'tipo', 'status'], through: { attributes: [] } },
+        ],
       }),
     ]);
     if (!editando) return res.redirect('/admin/subcategorias?error=nao_encontrado');
-    res.render('admin/subcategorias', { subcategorias, categorias, sucesso: null, erro: null, editando, count: null });
+    res.render('admin/subcategorias', { subcategorias, categorias, todosChecklists, sucesso: null, erro: null, editando, count: null });
   } catch (err) {
     console.error(err);
     res.redirect('/admin/subcategorias?error=erro_interno');
@@ -117,6 +138,63 @@ const toggleStatusSub = async (req, res) => {
   }
 };
 
+// ── Checklists vinculados ─────────────────────────────────────────────────────
+
+// POST /admin/subcategorias/:id/checklists/vincular  (JSON)
+const vincularChecklist = async (req, res) => {
+  const { id } = req.params;
+  const { checklistId } = req.body;
+  try {
+    const sub = await SubcategoriaProduto.findByPk(id, {
+      include: [{ model: Checklist, as: 'checklists', through: { attributes: [] } }],
+    });
+    if (!sub) return res.json({ ok: false, mensagem: 'Subcategoria não encontrada.' });
+    const chk = await Checklist.findByPk(checklistId);
+    if (!chk) return res.json({ ok: false, mensagem: 'Checklist não encontrado.' });
+
+    // addChecklists é criado automaticamente pelo belongsToMany
+    await sub.addChecklist(chk);
+    res.json({ ok: true, checklist: { id: chk.id, codigo: chk.codigo, nome: chk.nome, tipo: chk.tipo } });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, mensagem: 'Erro interno.' });
+  }
+};
+
+// POST /admin/subcategorias/:id/checklists/desvincular  (JSON)
+const desvincularChecklist = async (req, res) => {
+  const { id } = req.params;
+  const { checklistId } = req.body;
+  try {
+    const sub = await SubcategoriaProduto.findByPk(id, {
+      include: [{ model: Checklist, as: 'checklists', through: { attributes: [] } }],
+    });
+    if (!sub) return res.json({ ok: false, mensagem: 'Subcategoria não encontrada.' });
+    const chk = await Checklist.findByPk(checklistId);
+    if (!chk) return res.json({ ok: false, mensagem: 'Checklist não encontrado.' });
+
+    await sub.removeChecklist(chk);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false, mensagem: 'Erro interno.' });
+  }
+};
+
+// GET /admin/subcategorias/:id/checklists  (JSON — lista os checklists atuais)
+const getChecklistsDaSub = async (req, res) => {
+  try {
+    const sub = await SubcategoriaProduto.findByPk(req.params.id, {
+      include: [{ model: Checklist, as: 'checklists', attributes: ['id', 'codigo', 'nome', 'tipo', 'status'], through: { attributes: [] } }],
+    });
+    if (!sub) return res.json({ ok: false });
+    res.json({ ok: true, checklists: sub.checklists });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: false });
+  }
+};
+
 // POST /admin/subcategorias/importar - Importa via JSON (fetch)
 const importarSubcategorias = async (req, res) => {
   const { subcategorias: lista } = req.body;
@@ -171,4 +249,7 @@ module.exports = {
   toggleStatusSub,
   importarSubcategorias,
   deletarSelecionados,
+  vincularChecklist,
+  desvincularChecklist,
+  getChecklistsDaSub,
 };
