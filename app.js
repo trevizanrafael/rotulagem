@@ -24,8 +24,8 @@ app.set('view engine', 'ejs');
 app.set('views', './views');
 
 // Middleware de parsing
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+app.use(express.json({ limit: '20mb' }));
 
 // Configuração de sessão
 app.use(session({

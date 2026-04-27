@@ -35,12 +35,12 @@ const postLogin = async (req, res) => {
   }
 };
 
-// GET /home - Página inicial do usuário autenticado
+// GET /home - Página inicial do usuário autenticado (chat com IA)
 const getHome = (req, res) => {
   if (!req.session.userId) {
     return res.redirect('/login');
   }
-  res.render('user/home', { username: req.session.username });
+  res.render('user/chat', { username: req.session.username });
 };
 
 // POST /logout - Encerra sessão do usuário
