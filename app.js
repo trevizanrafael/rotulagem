@@ -12,6 +12,7 @@ require('./models/ChecklistSecao');
 require('./models/ChecklistItem');
 require('./models/SubcategoriaChecklist');
 require('./models/Produto');
+require('./models/ProdutoRespostaItem');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 

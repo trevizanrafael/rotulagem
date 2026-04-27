@@ -40,6 +40,42 @@ const Produto = sequelize.define('Produto', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  // ── Dados Rótulo ──────────────────────────────────────────────
+  conteudoLiquido: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  unidadeMedida: {
+    type: DataTypes.ENUM('ml', 'L', 'g', 'kg', 'mg', 'un', 'pç', 'cx'),
+    allowNull: true,
+  },
+  fabricante: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
+  cnpjFabricante: {
+    type: DataTypes.STRING(18),
+    allowNull: true,
+  },
+  servicoInspecao: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  condicoesConservacao: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  // ── Análise ───────────────────────────────────────────────────
+  statusAnalise: {
+    type: DataTypes.ENUM(
+      'CHECKLIST_EM_ANDAMENTO',
+      'CHECKLIST_CONCLUIDA',
+      'PRONTO_PARA_IA',
+      'AVALIADO_POR_IA'
+    ),
+    allowNull: false,
+    defaultValue: 'CHECKLIST_EM_ANDAMENTO',
+  },
 }, {
   tableName: 'produtos',
   timestamps: true,

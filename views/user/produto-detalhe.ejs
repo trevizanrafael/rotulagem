@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title><%= produto.marca %> — FoodTech</title>
+  <style>
+    /* ── Abas ── */
+    .tabs-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.75rem;
+    }
+    .tab-btn {
+      padding: .65rem 1.35rem;
+      font-family: inherit;
+      font-size: .875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+    .tab-btn:hover { color: var(--blue); }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Status badge ── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .3rem .9rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .2px;
+      border: 1.5px solid;
+    }
+
+    /* ── Checklist cards ── */
+    .checklist-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      cursor: pointer;
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+    .checklist-card:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--blue-mid);
+    }
+    .checklist-card-info { flex: 1; }
+    .checklist-card-title { font-weight: 600; color: var(--text); font-size: .95rem; }
+    .checklist-card-sub   { font-size: .8rem; color: var(--text-muted); margin-top:.2rem; }
+
+    /* ── Progresso ── */
+    .progress-bar-wrap {
+      background: var(--bg);
+      border-radius: 999px;
+      height: 7px;
+      overflow: hidden;
+      margin-top: .5rem;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--blue), #038aef);
+      transition: width .4s ease;
+    }
+
+    /* ── Modal checklist ── */
+    .cl-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,20,40,.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      z-index: 950;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+      overflow-y: auto;
+    }
+    .cl-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .cl-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 64px rgba(0,0,0,.2);
+      width: 100%;
+      max-width: 720px;
+      transform: scale(.93) translateY(16px);
+      transition: transform .24s cubic-bezier(.34,1.56,.64,1), opacity .22s ease;
+      opacity: 0;
+      margin: auto;
+    }
+    .cl-modal-overlay.open .cl-modal { transform: scale(1) translateY(0); opacity: 1; }
+    .cl-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 2;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .cl-modal-header h3 { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .cl-modal-body { padding: 1.25rem 1.5rem; max-height: 65vh; overflow-y: auto; }
+    .cl-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .6rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      position: sticky;
+      bottom: 0;
+      background: var(--surface);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    .modal-close-btn {
+      background: none; border: none; font-size: 1.2rem;
+      cursor: pointer; color: var(--text-muted); line-height: 1;
+    }
+    .modal-close-btn:hover { color: var(--danger); }
+
+    /* ── Item de checklist ── */
+    .cl-secao { margin-bottom: 1.5rem; }
+    .cl-secao-title {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      padding: .4rem 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .85rem;
+    }
+    .cl-item {
+      padding: .85rem 1rem;
+      background: var(--bg);
+      border-radius: var(--radius);
+      margin-bottom: .6rem;
+    }
+    .cl-item-pergunta { font-size: .9rem; font-weight: 500; color: var(--text); margin-bottom: .65rem; }
+    .cl-item-ajuda    { font-size: .78rem; color: var(--text-muted); margin-bottom: .65rem; font-style: italic; }
+    .cl-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: .5rem;
+    }
+    .cl-radio { display: none; }
+    .cl-label {
+      padding: .32rem .85rem;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+      color: var(--text-muted);
+    }
+    .cl-radio:checked + .cl-label[data-val="CONFORME"]      { background:#f0fdf4; border-color:#16a34a; color:#16a34a; }
+    .cl-radio:checked + .cl-label[data-val="NAO_CONFORME"]  { background:#fef2f2; border-color:#dc2626; color:#dc2626; }
+    .cl-radio:checked + .cl-label[data-val="NAO_APLICAVEL"] { background:#fef9c3; border-color:#ca8a04; color:#ca8a04; }
+    .cl-radio:checked + .cl-label[data-val="NAO_AVALIADO"]  { background:var(--bg); border-color:var(--border); color:var(--text-muted); }
+    .cl-obs {
+      width: 100%;
+      padding: .45rem .75rem;
+      font-family: inherit;
+      font-size: .825rem;
+      color: var(--text);
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      resize: vertical;
+      margin-top: .35rem;
+      transition: border-color var(--transition);
+    }
+    .cl-obs:focus { border-color: var(--blue); }
+
+    /* ── Formulário rótulo ── */
+    .rotulo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media(max-width:640px){ .rotulo-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<%- include('../partials/_user-layout', { currentPage: 'produtos', username: username }) %>
+
+<div class="app-content">
+
+  <!-- Breadcrumb + cabeçalho -->
+  <div class="page-header fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <p style="font-size:.8rem; color:var(--text-muted); margin-bottom:.3rem;">
+        <a href="/produtos" style="color:var(--blue);">← Produtos</a>
+      </p>
+      <h1><%= produto.marca %></h1>
+      <p><%= produto.denominacaoVenda %></p>
+    </div>
+    <%
+      const sl = statusLabels[produto.statusAnalise] || statusLabels['CHECKLIST_EM_ANDAMENTO'];
+    %>
+    <span class="status-badge" style="color:<%= sl.color %>; background:<%= sl.bg %>; border-color:<%= sl.border %>;">
+      ● <%= sl.label %>
+    </span>
+  </div>
+
+  <!-- Alertas -->
+  <% if (sucesso) { %>
+  <div class="alert alert-success fade-up" id="alert-box">
+    <span>✅</span>
+    <% if (sucesso === 'rotulo_salvo') { %> Dados do rótulo salvos com sucesso! <% } %>
+  </div>
+  <% } %>
+  <% if (erro) { %>
+  <div class="alert alert-error fade-up" id="alert-box">
+    <span>❌</span> Erro ao salvar. Tente novamente.
+  </div>
+  <% } %>
+
+  <!-- Card principal com abas -->
+  <div class="card fade-up d1">
+    <div class="card-body" style="padding-bottom:0;">
+      <nav class="tabs-bar" role="tablist">
+        <button class="tab-btn <%= tab === 'identificacao' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('identificacao')">
+          📋 Dados de Identificação Geral
+        </button>
+        <button class="tab-btn <%= tab === 'rotulo' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('rotulo')">
+          🏷️ Dados Rótulo
+        </button>
+        <button class="tab-btn <%= tab === 'analise' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('analise')">
+          🔍 Análise
+        </button>
+      </nav>
+    </div>
+
+    <!-- ══ ABA 1: IDENTIFICAÇÃO GERAL ══ -->
+    <div id="aba-identificacao" class="tab-panel card-body <%= tab === 'identificacao' ? 'active' : '' %>">
+      <div class="rotulo-grid">
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Marca</p>
+          <p style="font-weight:600;color:var(--text);"><%= produto.marca %></p>
+        </div>
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Denominação de venda</p>
+          <p style="color:var(--text);"><%= produto.denominacaoVenda %></p>
+        </div>
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Categoria</p>
+          <p style="color:var(--text);"><%= produto.categoria ? produto.categoria.nome : '—' %></p>
+        </div>
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Subcategoria</p>
+          <p style="color:var(--text);"><%= produto.subcategoria ? produto.subcategoria.nome : '—' %></p>
+        </div>
+        <% if (produto.descricao) { %>
+        <div style="grid-column:1/-1;">
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Descrição</p>
+          <p style="color:var(--text-muted);line-height:1.6;"><%= produto.descricao %></p>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- ══ ABA 2: DADOS RÓTULO ══ -->
+    <div id="aba-rotulo" class="tab-panel card-body <%= tab === 'rotulo' ? 'active' : '' %>">
+      <form action="/produtos/<%= produto.id %>/rotulo" method="POST">
+        <div class="rotulo-grid">
+
+          <div class="form-group">
+            <label for="conteudoLiquido">Conteúdo líquido</label>
+            <input type="text" id="conteudoLiquido" name="conteudoLiquido"
+              value="<%= produto.conteudoLiquido || '' %>"
+              placeholder="Ex: 1000">
+          </div>
+
+          <div class="form-group">
+            <label for="unidadeMedida">Unidade de medida</label>
+            <select id="unidadeMedida" name="unidadeMedida">
+              <option value="">Selecione...</option>
+              <% ['ml','L','g','kg','mg','un','pç','cx'].forEach(u => { %>
+              <option value="<%= u %>" <%= produto.unidadeMedida === u ? 'selected' : '' %>><%= u %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label for="fabricante">Fabricante</label>
+            <input type="text" id="fabricante" name="fabricante"
+              value="<%= produto.fabricante || '' %>"
+              placeholder="Razão social do fabricante">
+          </div>
+
+          <div class="form-group">
+            <label for="cnpjFabricante">CNPJ do fabricante</label>
+            <input type="text" id="cnpjFabricante" name="cnpjFabricante"
+              value="<%= produto.cnpjFabricante || '' %>"
+              placeholder="00.000.000/0000-00">
+          </div>
+
+          <div class="form-group">
+            <label for="servicoInspecao">Serviço de inspeção</label>
+            <input type="text" id="servicoInspecao" name="servicoInspecao"
+              value="<%= produto.servicoInspecao || '' %>"
+              placeholder="Ex: SIF 1234, SISP, SISBI">
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label for="condicoesConservacao">Condições de conservação</label>
+            <textarea id="condicoesConservacao" name="condicoesConservacao" rows="3"
+              style="width:100%;padding:.65rem .9rem;font-family:inherit;font-size:.925rem;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);outline:none;resize:vertical;"
+              placeholder="Ex: Manter refrigerado entre 2°C e 8°C"><%= produto.condicoesConservacao || '' %></textarea>
+          </div>
+
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+          <button type="submit" class="btn btn-primary">💾 Salvar dados do rótulo</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ══ ABA 3: ANÁLISE ══ -->
+    <div id="aba-analise" class="tab-panel card-body <%= tab === 'analise' ? 'active' : '' %>">
+
+      <!-- Status -->
+      <div style="margin-bottom:1.75rem;">
+        <p style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.6rem;">Status da análise</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+          <% const statusOrdem = ['CHECKLIST_EM_ANDAMENTO','CHECKLIST_CONCLUIDA','PRONTO_PARA_IA','AVALIADO_POR_IA']; %>
+          <% statusOrdem.forEach(s => { %>
+          <%   const sl2 = statusLabels[s]; %>
+          <%   const isAtual = produto.statusAnalise === s; %>
+          <span class="status-badge"
+            style="color:<%= sl2.color %>; background:<%= sl2.bg %>; border-color:<%= sl2.border %>; opacity:<%= isAtual ? 1 : 0.35 %>; font-size:.78rem;">
+            <%= isAtual ? '●' : '○' %> <%= sl2.label %>
+          </span>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Lista de checklists -->
+      <p style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.85rem;">Checklists aplicáveis</p>
+
+      <% if (checklists.length === 0) { %>
+      <div class="empty-state" style="padding:2rem 1rem;">
+        <div class="empty-state-icon">📋</div>
+        <p style="font-weight:600;color:var(--text);margin-bottom:.3rem;">Nenhum checklist vinculado</p>
+        <p>Contate o administrador para vincular checklists à subcategoria deste produto.</p>
+      </div>
+      <% } else { %>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <% checklists.forEach(cl => {
+            let totalItens = 0, totalRespondidos = 0;
+            (cl.secoes || []).forEach(s => {
+              (s.itens || []).forEach(it => {
+                totalItens++;
+                const r = respostasMap[it.id];
+                if (r && r.resultado !== 'NAO_AVALIADO') totalRespondidos++;
+              });
+            });
+            const pct = totalItens > 0 ? Math.round(totalRespondidos/totalItens*100) : 0;
+        %>
+        <div class="checklist-card" onclick="abrirChecklist(<%= JSON.stringify(cl) %>, <%= JSON.stringify(respostasMap) %>)">
+          <div class="checklist-card-info">
+            <div class="checklist-card-title">📋 <%= cl.codigo %> — <%= cl.nome %></div>
+            <div class="checklist-card-sub"><%= totalItens %> item<%= totalItens !== 1 ? 's' : '' %> · <%= pct %>% respondido<%= pct !== 1 ? 's' : '' %></div>
+            <div class="progress-bar-wrap" style="max-width:260px;">
+              <div class="progress-bar-fill" style="width:<%= pct %>%;"></div>
+            </div>
+          </div>
+          <span class="btn btn-primary btn-sm">Preencher →</span>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL — Checklist
+══════════════════════════════ -->
+<div class="cl-modal-overlay" id="cl-modal-overlay">
+  <div class="cl-modal" id="cl-modal">
+    <div class="cl-modal-header">
+      <h3 id="cl-modal-title">Checklist</h3>
+      <button class="modal-close-btn" onclick="fecharChecklist()">✕</button>
+    </div>
+    <div class="cl-modal-body" id="cl-modal-body">
+      <!-- renderizado via JS -->
+    </div>
+    <div class="cl-modal-footer">
+      <span id="cl-save-status" style="font-size:.8rem;color:var(--text-muted);margin-right:auto;"></span>
+      <button class="btn btn-ghost" onclick="fecharChecklist()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarChecklist()">💾 Salvar respostas</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCRIPTS
+══════════════════════════════ -->
+<script>
+const produtoId = <%= produto.id %>;
+let clAtualId   = null;
+
+/* ── Abas ── */
+function trocarAba(id) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const ids = ['identificacao','rotulo','analise'];
+    b.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('aba-' + id).classList.add('active');
+  history.replaceState(null,'',`?tab=${id}`);
+}
+
+/* ── Modal Checklist ── */
+function abrirChecklist(cl, respostasMap) {
+  clAtualId = cl.id;
+  document.getElementById('cl-modal-title').textContent = `📋 ${cl.codigo} — ${cl.nome}`;
+  document.getElementById('cl-save-status').textContent = '';
+
+  const body = document.getElementById('cl-modal-body');
+  let html = '';
+
+  (cl.secoes || []).forEach(s => {
+    html += `<div class="cl-secao">
+      <div class="cl-secao-title">${s.titulo}</div>`;
+    if (s.descricao) html += `<p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem;">${s.descricao}</p>`;
+
+    (s.itens || []).forEach(it => {
+      const r       = respostasMap[it.id] || {};
+      const atual   = r.resultado || 'NAO_AVALIADO';
+      const obs     = r.observacao || '';
+      const opcoes  = [
+        { val:'CONFORME',      label:'✅ Conforme'       },
+        { val:'NAO_CONFORME',  label:'❌ Não conforme'   },
+        { val:'NAO_AVALIADO',  label:'⬜ Não avaliado'   },
+      ];
+      if (it.aceitaNaoAplicavel) opcoes.push({ val:'NAO_APLICAVEL', label:'➖ N/A' });
+
+      html += `<div class="cl-item" data-item-id="${it.id}">
+        <div class="cl-item-pergunta">${it.pergunta}</div>
+        ${it.descricaoAjuda ? `<div class="cl-item-ajuda">${it.descricaoAjuda}</div>` : ''}
+        <div class="cl-options">
+          ${opcoes.map(o => `
+            <input class="cl-radio" type="radio"
+              name="item_${it.id}" id="r_${it.id}_${o.val}"
+              value="${o.val}" ${atual === o.val ? 'checked' : ''}>
+            <label class="cl-label" for="r_${it.id}_${o.val}" data-val="${o.val}">${o.label}</label>
+          `).join('')}
+        </div>
+        <textarea class="cl-obs" rows="2"
+          id="obs_${it.id}"
+          placeholder="Observação (opcional)...">${obs}</textarea>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  if (!html) html = '<p style="color:var(--text-muted);font-size:.9rem;">Nenhum item nesta checklist.</p>';
+  body.innerHTML = html;
+
+  document.getElementById('cl-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharChecklist() {
+  document.getElementById('cl-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  clAtualId = null;
+}
+
+async function salvarChecklist() {
+  const status = document.getElementById('cl-save-status');
+  status.textContent = 'Salvando...';
+
+  const respostas = {};
+  document.querySelectorAll('.cl-item[data-item-id]').forEach(div => {
+    const itemId  = div.dataset.itemId;
+    const radioEl = div.querySelector(`input[name="item_${itemId}"]:checked`);
+    const obsEl   = document.getElementById(`obs_${itemId}`);
+    respostas[itemId] = {
+      resultado:  radioEl ? radioEl.value : 'NAO_AVALIADO',
+      observacao: obsEl ? obsEl.value : '',
+    };
+  });
+
+  try {
+    const resp = await fetch(`/produtos/${produtoId}/checklist/${clAtualId}/respostas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ respostas }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      status.textContent = '✅ Salvo!';
+      status.style.color = 'var(--success)';
+      setTimeout(() => { fecharChecklist(); location.reload(); }, 900);
+    } else {
+      status.textContent = '❌ Erro ao salvar.';
+      status.style.color = 'var(--danger)';
+    }
+  } catch(e) {
+    status.textContent = '❌ Erro de conexão.';
+    status.style.color = 'var(--danger)';
+  }
+}
+
+/* ── Fechar modal com ESC / overlay ── */
+document.getElementById('cl-modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('cl-modal-overlay')) fecharChecklist();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharChecklist();
+});
+
+/* ── Auto-esconder alertas ── */
+setTimeout(() => {
+  const a = document.getElementById('alert-box');
+  if (a) { a.style.transition = 'opacity .4s'; a.style.opacity = '0'; }
+}, 4000);
+</script>
+
+</body>
+</html>
