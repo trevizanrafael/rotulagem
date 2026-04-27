@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title>Produtos — FoodTech</title>
+</head>
+<body>
+
+<%- include('../partials/_user-layout', { currentPage: 'produtos', username: username }) %>
+
+<div class="app-content">
+  <div class="page-header fade-up">
+    <h1>Produtos</h1>
+    <p>Gerencie os produtos associados à sua conta.</p>
+  </div>
+
+  <!-- Barra de ações -->
+  <div class="card fade-up d1">
+    <div class="card-header">
+      <h2>📦 Meus Produtos</h2>
+      <span class="card-badge">0 produtos</span>
+    </div>
+    <div class="card-body">
+
+      <!-- Empty state -->
+      <div class="empty-state">
+        <div class="empty-state-icon">📦</div>
+        <p style="font-weight:600; color:var(--text); margin-bottom:.4rem;">Nenhum produto cadastrado</p>
+        <p>Esta seção estará disponível em breve.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title>Avaliação IA rótulo — FoodTech</title>
+</head>
+<body>
+
+<%- include('../partials/_user-layout', { currentPage: 'avaliacao-ia', username: username }) %>
+
+<div class="app-content">
+  <div class="page-header fade-up">
+    <h1>Avaliação IA rótulo</h1>
+    <p>Envie a imagem ou PDF do rótulo para análise automática de conformidade.</p>
+  </div>
+
+  <!-- Área principal -->
+  <div class="card fade-up d1">
+    <div class="card-header">
+      <h2>🤖 Análise por Inteligência Artificial</h2>
+    </div>
+    <div class="card-body">
+
+      <!-- Empty state -->
+      <div class="empty-state">
+        <div class="empty-state-icon">🤖</div>
+        <p style="font-weight:600; color:var(--text); margin-bottom:.4rem;">Avaliação por IA</p>
+        <p>Esta funcionalidade estará disponível em breve.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
