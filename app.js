@@ -10,6 +10,8 @@ require('./models/SubcategoriaProduto');
 require('./models/Checklist');
 require('./models/ChecklistSecao');
 require('./models/ChecklistItem');
+require('./models/SubcategoriaChecklist');
+require('./models/Produto');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 
