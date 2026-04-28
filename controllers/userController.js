@@ -43,6 +43,22 @@ const getHome = (req, res) => {
   res.render('user/home', { username: req.session.username });
 };
 
+// GET /produtos - Produtos do usuário
+const getProdutos = (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect('/login');
+  }
+  res.render('user/produtos', { username: req.session.username });
+};
+
+// GET /avaliacao-ia - Avaliação IA rótulo
+const getAvaliacaoIA = (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect('/login');
+  }
+  res.render('user/avaliacao-ia', { username: req.session.username });
+};
+
 // POST /logout - Encerra sessão do usuário
 const postLogout = (req, res) => {
   req.session.destroy(() => {
@@ -54,5 +70,7 @@ module.exports = {
   getLogin,
   postLogin,
   getHome,
+  getProdutos,
+  getAvaliacaoIA,
   postLogout,
 };

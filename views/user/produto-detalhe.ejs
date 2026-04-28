@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <%- include('../partials/_head') %>
+  <title><%= produto.marca %> — FoodTech</title>
+  <!-- PDF.js para conversão de PDF em imagens no browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs" type="module" id="pdfjs-script"></script>
+  <script>
+    // Compat shim: exposto globalmente após carregamento
+    window._pdfjsReady = false;
+    window._pdfjsLib   = null;
+  </script>
+  <style>
+    /* ── Abas ── */
+    .tabs-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.75rem;
+    }
+    .tab-btn {
+      padding: .65rem 1.35rem;
+      font-family: inherit;
+      font-size: .875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+    .tab-btn:hover { color: var(--blue); }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Status badge ── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .3rem .9rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .2px;
+      border: 1.5px solid;
+    }
+
+    /* ── Checklist cards ── */
+    .checklist-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      cursor: pointer;
+      transition: box-shadow var(--transition), border-color var(--transition);
+    }
+    .checklist-card:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--blue-mid);
+    }
+    .checklist-card-info { flex: 1; }
+    .checklist-card-title { font-weight: 600; color: var(--text); font-size: .95rem; }
+    .checklist-card-sub   { font-size: .8rem; color: var(--text-muted); margin-top:.2rem; }
+
+    /* ── Progresso ── */
+    .progress-bar-wrap {
+      background: var(--bg);
+      border-radius: 999px;
+      height: 7px;
+      overflow: hidden;
+      margin-top: .5rem;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--blue), #038aef);
+      transition: width .4s ease;
+    }
+
+    /* ── Modal checklist ── */
+    .cl-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,20,40,.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      z-index: 950;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+      overflow-y: auto;
+    }
+    .cl-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .cl-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 64px rgba(0,0,0,.2);
+      width: 100%;
+      max-width: 720px;
+      transform: scale(.93) translateY(16px);
+      transition: transform .24s cubic-bezier(.34,1.56,.64,1), opacity .22s ease;
+      opacity: 0;
+      margin: auto;
+    }
+    .cl-modal-overlay.open .cl-modal { transform: scale(1) translateY(0); opacity: 1; }
+    .cl-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 2;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .cl-modal-header h3 { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .cl-modal-body { padding: 1.25rem 1.5rem; max-height: 65vh; overflow-y: auto; }
+    .cl-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .6rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      position: sticky;
+      bottom: 0;
+      background: var(--surface);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    .modal-close-btn {
+      background: none; border: none; font-size: 1.2rem;
+      cursor: pointer; color: var(--text-muted); line-height: 1;
+    }
+    .modal-close-btn:hover { color: var(--danger); }
+
+    /* ── Tabela de checklist ── */
+    .cl-secao { margin-bottom: 2rem; }
+    .cl-secao-title {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      padding: .4rem 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .5rem;
+    }
+    .cl-secao-desc {
+      font-size: .78rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: .75rem;
+    }
+
+    /* Tabela por seção */
+    .cl-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+    .cl-table thead th {
+      padding: .5rem .6rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .cl-table thead th.th-pergunta { text-align: left; }
+    .cl-table thead th.th-obs      { text-align: left; min-width: 140px; }
+
+    .cl-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+    .cl-table tbody tr:last-child { border-bottom: none; }
+    .cl-table tbody tr:hover { background: var(--blue-light); }
+
+    .cl-table tbody td {
+      padding: .65rem .6rem;
+      vertical-align: middle;
+    }
+    .cl-table tbody td.td-pergunta {
+      color: var(--text);
+      font-weight: 500;
+      line-height: 1.45;
+    }
+    .cl-table tbody td.td-ajuda {
+      font-size: .75rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .cl-table tbody td.td-dot { text-align: center; }
+
+    /* Radio como ponto/bolinha */
+    .cl-radio { display: none; }
+    .cl-dot-label {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color .15s, background .15s, transform .12s;
+      position: relative;
+    }
+    .cl-dot-label::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      background: transparent;
+      transition: background .15s;
+    }
+    /* Hover */
+    .cl-dot-label:hover { border-color: var(--blue-mid); transform: scale(1.1); }
+
+    /* Checked states — dot fill por coluna */
+    .cl-radio[data-col="CONFORME"]:checked     + .cl-dot-label { border-color:#16a34a; }
+    .cl-radio[data-col="CONFORME"]:checked     + .cl-dot-label::after { background:#16a34a; }
+    .cl-radio[data-col="NAO_CONFORME"]:checked  + .cl-dot-label { border-color:#dc2626; }
+    .cl-radio[data-col="NAO_CONFORME"]:checked  + .cl-dot-label::after { background:#dc2626; }
+    .cl-radio[data-col="NAO_APLICAVEL"]:checked + .cl-dot-label { border-color:#ca8a04; }
+    .cl-radio[data-col="NAO_APLICAVEL"]:checked + .cl-dot-label::after { background:#ca8a04; }
+    .cl-radio[data-col="NAO_AVALIADO"]:checked  + .cl-dot-label { border-color:var(--text-light); }
+    .cl-radio[data-col="NAO_AVALIADO"]:checked  + .cl-dot-label::after { background:var(--text-light); }
+
+    /* Observação inline */
+    .cl-obs-inline {
+      width: 100%;
+      min-width: 120px;
+      padding: .35rem .6rem;
+      font-family: inherit;
+      font-size: .8rem;
+      color: var(--text);
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      resize: none;
+      transition: border-color var(--transition);
+      height: 36px;
+    }
+    .cl-obs-inline:focus { border-color: var(--blue); height: 60px; }
+
+    /* ── Formulário rótulo ── */
+    .rotulo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media(max-width:640px){ .rotulo-grid { grid-template-columns: 1fr; } }
+
+    /* ── Upload de arquivos ── */
+    .upload-zone {
+      border: 2.5px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: var(--bg);
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--blue);
+      background: var(--blue-light);
+    }
+    .upload-zone input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-zone-icon { font-size: 2.2rem; margin-bottom: .5rem; }
+    .upload-zone-text { font-size: .9rem; font-weight: 600; color: var(--text); }
+    .upload-zone-sub  { font-size: .78rem; color: var(--text-muted); margin-top: .25rem; }
+
+    /* Grid de arquivos */
+    .arquivo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .arquivo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow .18s, border-color .18s;
+      position: relative;
+    }
+    .arquivo-card:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--blue-mid);
+    }
+    .arquivo-thumb {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+    }
+    .arquivo-pdf-thumb {
+      width: 100%;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fef2f2;
+      font-size: 2.5rem;
+      cursor: pointer;
+    }
+    .arquivo-info {
+      padding: .5rem .6rem;
+      font-size: .75rem;
+    }
+    .arquivo-nome {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .arquivo-meta { color: var(--text-muted); margin-top: .1rem; }
+    .arquivo-del {
+      position: absolute;
+      top: .35rem;
+      right: .35rem;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(220,38,38,.85);
+      color: #fff;
+      border: none;
+      font-size: .8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .arquivo-card:hover .arquivo-del { opacity: 1; }
+
+    /* Nome renomeável */
+    .arquivo-nome-wrap { position: relative; }
+    .arquivo-nome {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      display: block;
+    }
+    .arquivo-nome:hover { color: var(--blue); text-decoration: underline dotted; }
+    .arquivo-nome-input {
+      width: 100%;
+      padding: .2rem .35rem;
+      font-family: inherit;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--white);
+      border: 1.5px solid var(--blue);
+      border-radius: var(--radius);
+      outline: none;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .lightbox-close {
+      position: fixed;
+      top: 1rem;
+      right: 1.25rem;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    /* Upload progress */
+    .upload-progress {
+      margin-top: 1rem;
+      display: none;
+    }
+    .upload-progress.visible { display: block; }
+    .upload-progress-bar {
+      height: 6px;
+      background: var(--blue-light);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .upload-progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 999px;
+      width: 0%;
+      transition: width .3s ease;
+    }
+
+    /* ── Cards de rótulo ── */
+    .rotulo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: .85rem;
+      overflow: hidden;
+      transition: box-shadow .18s;
+    }
+    .rotulo-card:hover { box-shadow: var(--shadow); }
+    .rcard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .9rem 1.25rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      gap: .75rem;
+    }
+    .rcard-title {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+    .rcard-num {
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .1rem .4rem;
+    }
+    .rcard-badge {
+      background: var(--blue-light);
+      color: var(--blue);
+      border: 1px solid var(--blue-mid);
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: .15rem .65rem;
+    }
+    .rcard-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .5rem 1rem;
+      padding: .9rem 1.25rem;
+    }
+    .rcard-field span {
+      display: block;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .2rem;
+    }
+    .rcard-field p { font-size: .875rem; color: var(--text); }
+    .rcard-fotos {
+      padding: .75rem 1.25rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .rcard-fotos-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: .5rem;
+    }
+    /* Foto selecionada no picker */
+    .rf-foto-item.selected { border-color: var(--blue) !important; }
+    .rf-foto-item.selected .rf-foto-check { display: flex !important; }
+  </style>
+</head>
+<body>
+
+<%- include('../partials/_user-layout', { currentPage: 'produtos', username: username }) %>
+
+<div class="app-content">
+
+  <!-- Breadcrumb + cabeçalho -->
+  <div class="page-header fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <p style="font-size:.8rem; color:var(--text-muted); margin-bottom:.3rem;">
+        <a href="/produtos" style="color:var(--blue);">← Produtos</a>
+      </p>
+      <h1><%= produto.marca %></h1>
+      <p><%= produto.denominacaoVenda %></p>
+    </div>
+    <%
+      const sl = statusLabels[produto.statusAnalise] || statusLabels['CHECKLIST_EM_ANDAMENTO'];
+    %>
+    <span class="status-badge" style="color:<%= sl.color %>; background:<%= sl.bg %>; border-color:<%= sl.border %>;">
+      ● <%= sl.label %>
+    </span>
+  </div>
+
+  <!-- Alertas -->
+  <% if (sucesso) { %>
+  <div class="alert alert-success fade-up" id="alert-box">
+    <span>✅</span>
+    <% if (sucesso === 'rotulo_salvo') { %> Dados do rótulo salvos com sucesso! <% } %>
+  </div>
+  <% } %>
+  <% if (erro) { %>
+  <div class="alert alert-error fade-up" id="alert-box">
+    <span>❌</span> Erro ao salvar. Tente novamente.
+  </div>
+  <% } %>
+
+  <!-- Card principal com abas -->
+  <div class="card fade-up d1">
+    <div class="card-body" style="padding-bottom:0;">
+      <nav class="tabs-bar" role="tablist">
+        <button class="tab-btn <%= tab === 'identificacao' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('identificacao')">
+          📋 Dados de Identificação Geral
+        </button>
+        <button class="tab-btn <%= tab === 'rotulo' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('rotulo')">
+          🏷️ Dados Rótulo
+        </button>
+        <button class="tab-btn <%= tab === 'arquivos' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('arquivos')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Rótulo
+          <% if (arquivos && arquivos.length > 0) { %>
+          <span style="background:var(--blue);color:#fff;border-radius:999px;font-size:.65rem;padding:.1rem .45rem;font-weight:700;margin-left:.2rem;"><%= arquivos.length %></span>
+          <% } %>
+        </button>
+        <button class="tab-btn <%= tab === 'analise' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('analise')">
+          🔍 Análise
+        </button>
+      </nav>
+    </div>
+
+    <!-- ══ ABA 1: IDENTIFICAÇÃO GERAL ══ -->
+    <div id="aba-identificacao" class="tab-panel card-body <%= tab === 'identificacao' ? 'active' : '' %>">
+      <div class="rotulo-grid">
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Marca</p>
+          <p style="font-weight:600;color:var(--text);"><%= produto.marca %></p>
+        </div>
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Denominação de venda</p>
+          <p style="color:var(--text);"><%= produto.denominacaoVenda %></p>
+        </div>
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Categoria</p>
+          <p style="color:var(--text);"><%= produto.categoria ? produto.categoria.nome : '—' %></p>
+        </div>
+        <div>
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Subcategoria</p>
+          <p style="color:var(--text);"><%= produto.subcategoria ? produto.subcategoria.nome : '—' %></p>
+        </div>
+        <% if (produto.descricao) { %>
+        <div style="grid-column:1/-1;">
+          <p class="section-label" style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.35rem;">Descrição</p>
+          <p style="color:var(--text-muted);line-height:1.6;"><%= produto.descricao %></p>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- ══ ABA 2: DADOS RÓTULO ══ -->
+    <div id="aba-rotulo" class="tab-panel card-body <%= tab === 'rotulo' ? 'active' : '' %>">
+
+      <!-- Cabeçalho da seção -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.6rem;">
+        <div>
+          <p style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.2rem;">Rótulos cadastrados</p>
+          <p style="font-size:.82rem;color:var(--text-muted);">Cada entrada representa um rótulo/embalagem diferente deste produto.</p>
+        </div>
+        <div style="display:flex;gap:.5rem;">
+          <button class="btn btn-secondary btn-sm" id="btn-exportar" onclick="exportarRotulos()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="abrirFormRotulo(null)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo rótulo
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulário de adicionar/editar (oculto por padrão) -->
+      <div id="rotulo-form-wrap" style="display:none;margin-bottom:1.5rem;">
+        <div style="background:var(--bg);border:1.5px solid var(--blue-mid);border-radius:var(--radius-lg);padding:1.25rem 1.4rem;">
+          <p style="font-size:.75rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--blue);margin-bottom:1rem;" id="rotulo-form-titulo">Novo rótulo</p>
+          <input type="hidden" id="rf-id" value="">
+          <div class="rotulo-grid">
+            <div class="form-group">
+              <label for="rf-conteudo">Conteúdo líquido</label>
+              <input type="text" id="rf-conteudo" placeholder="Ex: 1000">
+            </div>
+            <div class="form-group">
+              <label for="rf-unidade">Unidade de medida</label>
+              <select id="rf-unidade">
+                <option value="">Selecione...</option>
+                <% ['ml','L','g','kg','mg','un','pç','cx'].forEach(u => { %>
+                <option value="<%= u %>"><%= u %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label for="rf-fabricante">Fabricante</label>
+              <input type="text" id="rf-fabricante" placeholder="Razão social do fabricante">
+            </div>
+            <div class="form-group">
+              <label for="rf-cnpj">CNPJ do fabricante</label>
+              <input type="text" id="rf-cnpj" placeholder="00.000.000/0000-00">
+            </div>
+            <div class="form-group">
+              <label for="rf-inspecao">Serviço de inspeção</label>
+              <input type="text" id="rf-inspecao" placeholder="Ex: SIF 1234, SISBI">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label for="rf-conservacao">Condições de conservação</label>
+              <textarea id="rf-conservacao" rows="2" style="width:100%;padding:.65rem .9rem;font-family:inherit;font-size:.875rem;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);outline:none;resize:vertical;" placeholder="Ex: Manter refrigerado entre 2°C e 8°C"></textarea>
+            </div>
+          </div>
+
+          <!-- Seletor de fotos -->
+          <% if (arquivos && arquivos.filter(a => a.tipo === 'image').length > 0) { %>
+          <div style="margin-top:1rem;">
+            <p style="font-size:.75rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-muted);margin-bottom:.6rem;">Fotos referentes a este rótulo</p>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;" id="rf-foto-picker">
+              <% arquivos.filter(a => a.tipo === 'image').forEach(arq => { %>
+              <div class="rf-foto-item" data-id="<%= arq.id %>"
+                onclick="toggleFotoSelect(<%= arq.id %>)"
+                style="position:relative;cursor:pointer;border-radius:var(--radius);overflow:hidden;border:2.5px solid transparent;transition:border-color .15s;width:80px;">
+                <img src="/uploads/produtos/<%= arq.nomeSalvo %>"
+                  style="width:80px;height:72px;object-fit:cover;display:block;"
+                  title="<%= arq.nomeOriginal %>">
+                <div style="padding:.25rem .3rem;background:var(--surface);font-size:.65rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;">
+                  <%= arq.nomeOriginal %>
+                </div>
+                <div class="rf-foto-check" style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;font-size:.65rem;display:none;align-items:center;justify-content:center;">✓</div>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+          <% } %>
+
+          <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.1rem;">
+            <span id="rotulo-form-status" style="font-size:.8rem;color:var(--text-muted);align-self:center;margin-right:auto;"></span>
+            <button class="btn btn-ghost btn-sm" onclick="fecharFormRotulo()">Cancelar</button>
+            <button class="btn btn-primary btn-sm" onclick="salvarRotulo()">💾 Salvar rótulo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de rótulos -->
+      <div id="rotulo-lista">
+        <% if (!rotulos || rotulos.length === 0) { %>
+        <div id="rotulo-empty" style="text-align:center;padding:2rem 1rem;color:var(--text-muted);">
+          <div style="font-size:1.8rem;margin-bottom:.5rem;">🏷️</div>
+          <p style="font-weight:600;color:var(--text);margin-bottom:.2rem;">Nenhum rótulo cadastrado</p>
+          <p style="font-size:.85rem;">Clique em "Novo rótulo" para adicionar.</p>
+        </div>
+        <% } else { %>
+        <div id="rotulo-empty" style="display:none;"></div>
+        <% } %>
+
+        <% (rotulos || []).forEach((r, i) => { %>
+        <div class="rotulo-card" id="rcard-<%= r.id %>">
+          <div class="rcard-header">
+            <div class="rcard-title">
+              <span class="rcard-num">#<%= i+1 %></span>
+              <strong><%= r.fabricante || 'Sem fabricante' %></strong>
+              <% if (r.conteudoLiquido) { %>
+              <span class="rcard-badge"><%= r.conteudoLiquido %><%= r.unidadeMedida ? ' '+r.unidadeMedida : '' %></span>
+              <% } %>
+            </div>
+            <div style="display:flex;gap:.4rem;">
+              <button class="btn btn-secondary btn-sm"
+                onclick="abrirFormRotulo(<%= JSON.stringify(r) %>)">✏️ Editar</button>
+              <button class="btn btn-danger btn-sm"
+                onclick="deletarRotulo(<%= r.id %>)">🗑️</button>
+            </div>
+          </div>
+          <div class="rcard-body">
+            <% if (r.cnpjFabricante) { %><div class="rcard-field"><span>CNPJ</span><p><%= r.cnpjFabricante %></p></div><% } %>
+            <% if (r.servicoInspecao) { %><div class="rcard-field"><span>Inspeção</span><p><%= r.servicoInspecao %></p></div><% } %>
+            <% if (r.condicoesConservacao) { %><div class="rcard-field" style="grid-column:1/-1;"><span>Conservação</span><p><%= r.condicoesConservacao %></p></div><% } %>
+          </div>
+          <% if (r.fotos && r.fotos.length > 0) { %>
+          <div class="rcard-fotos">
+            <p class="rcard-fotos-label">Fotos do rótulo</p>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+              <% r.fotos.forEach(f => { %>
+              <div style="display:flex;align-items:center;gap:.4rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.3rem .5rem;">
+                <img src="/uploads/produtos/<%= f.nomeSalvo %>" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;"
+                  onclick="abrirLightbox('/uploads/produtos/<%= f.nomeSalvo %>')" title="<%= f.nomeOriginal %>">
+                <span style="font-size:.75rem;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= f.nomeOriginal %></span>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+          <% } %>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+
+
+    <!-- ══ ABA 3: RÓTULO (arquivos) ══ -->
+    <div id="aba-arquivos" class="tab-panel card-body <%= tab === 'arquivos' ? 'active' : '' %>">
+
+      <!-- Zona de upload -->
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="upload-input" multiple accept="image/*,.pdf"
+          onchange="processarArquivos(this.files)">
+        <div class="upload-zone-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
+            style="color:var(--blue-dark);">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-zone-text">Arraste os arquivos aqui ou clique para selecionar</div>
+        <div class="upload-zone-sub">Imagens (JPG, PNG, WEBP) e PDF · Máx. 20 MB · PDFs são convertidos em imagens</div>
+      </div>
+
+      <!-- Barra de progresso -->
+      <div class="upload-progress" id="upload-progress">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text-muted);margin-bottom:.3rem;">
+          <span id="upload-msg">Enviando...</span>
+          <span id="upload-pct">0%</span>
+        </div>
+        <div class="upload-progress-bar">
+          <div class="upload-progress-fill" id="upload-progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Grid de arquivos -->
+      <div class="arquivo-grid" id="arquivo-grid">
+        <% (arquivos || []).forEach(arq => { %>
+        <div class="arquivo-card" id="arq-<%= arq.id %>">
+          <% if (arq.tipo === 'image') { %>
+          <img class="arquivo-thumb" src="/uploads/produtos/<%= arq.nomeSalvo %>"
+            alt="<%= arq.nomeOriginal %>" title="Clique para ampliar"
+            onclick="abrirLightbox('/uploads/produtos/<%= arq.nomeSalvo %>')">
+          <% } else { %>
+          <div class="arquivo-pdf-thumb"
+            onclick="window.open('/uploads/produtos/<%= arq.nomeSalvo %>','_blank')"
+            title="Abrir PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+              stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <% } %>
+          <div class="arquivo-info">
+            <div class="arquivo-nome-wrap">
+              <span class="arquivo-nome" id="nome-txt-<%= arq.id %>"
+                title="Clique para renomear"
+                onclick="iniciarRename(<%= arq.id %>)"><%= arq.nomeOriginal %></span>
+              <input class="arquivo-nome-input" id="nome-inp-<%= arq.id %>"
+                style="display:none;" value="<%= arq.nomeOriginal %>"
+                onblur="salvarRename(<%= arq.id %>)"
+                onkeydown="if(event.key==='Enter')salvarRename(<%= arq.id %>);if(event.key==='Escape')cancelarRename(<%= arq.id %>);">
+            </div>
+            <div class="arquivo-meta"><%= Math.round((arq.tamanho||0)/1024) %> KB</div>
+          </div>
+          <button class="arquivo-del" onclick="deletarArquivo(<%= arq.id %>)" title="Remover">✕</button>
+        </div>
+        <% }) %>
+      </div>
+
+      <% if (!arquivos || arquivos.length === 0) { %>
+      <div id="empty-arquivos" class="empty-state" style="padding:1.5rem 0;">
+        <div class="empty-state-icon" style="font-size:1.8rem;">📎</div>
+        <p style="font-weight:600;color:var(--text);margin-bottom:.25rem;">Nenhum arquivo enviado</p>
+        <p>Arraste imagens ou PDFs do rótulo para começar.</p>
+      </div>
+      <% } else { %>
+      <div id="empty-arquivos" style="display:none;"></div>
+      <% } %>
+
+    </div>
+
+    <!-- ══ ABA 4: ANÁLISE ══ -->
+    <div id="aba-analise" class="tab-panel card-body <%= tab === 'analise' ? 'active' : '' %>">
+
+      <!-- Status -->
+      <div style="margin-bottom:1.75rem;">
+        <p style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.6rem;">Status da análise</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+          <% const statusOrdem = ['CHECKLIST_EM_ANDAMENTO','CHECKLIST_CONCLUIDA','PRONTO_PARA_IA','AVALIADO_POR_IA']; %>
+          <% statusOrdem.forEach(s => { %>
+          <%   const sl2 = statusLabels[s]; %>
+          <%   const isAtual = produto.statusAnalise === s; %>
+          <span class="status-badge"
+            style="color:<%= sl2.color %>; background:<%= sl2.bg %>; border-color:<%= sl2.border %>; opacity:<%= isAtual ? 1 : 0.35 %>; font-size:.78rem;">
+            <%= isAtual ? '●' : '○' %> <%= sl2.label %>
+          </span>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Lista de checklists -->
+      <p style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.85rem;">Checklists aplicáveis</p>
+
+      <% if (checklists.length === 0) { %>
+      <div class="empty-state" style="padding:2rem 1rem;">
+        <div class="empty-state-icon">📋</div>
+        <p style="font-weight:600;color:var(--text);margin-bottom:.3rem;">Nenhum checklist vinculado</p>
+        <p>Contate o administrador para vincular checklists à subcategoria deste produto.</p>
+      </div>
+      <% } else { %>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <% checklists.forEach(cl => {
+            let totalItens = 0, totalRespondidos = 0;
+            (cl.secoes || []).forEach(s => {
+              (s.itens || []).forEach(it => {
+                totalItens++;
+                const r = respostasMap[it.id];
+                if (r && r.resultado !== 'NAO_AVALIADO') totalRespondidos++;
+              });
+            });
+            const pct = totalItens > 0 ? Math.round(totalRespondidos/totalItens*100) : 0;
+        %>
+        <div class="checklist-card" onclick="abrirChecklist(<%= JSON.stringify(cl) %>, <%= JSON.stringify(respostasMap) %>)">
+          <div class="checklist-card-info">
+            <div class="checklist-card-title">📋 <%= cl.codigo %> — <%= cl.nome %></div>
+            <div class="checklist-card-sub"><%= totalItens %> item<%= totalItens !== 1 ? 's' : '' %> · <%= pct %>% respondido<%= pct !== 1 ? 's' : '' %></div>
+            <div class="progress-bar-wrap" style="max-width:260px;">
+              <div class="progress-bar-fill" style="width:<%= pct %>%;"></div>
+            </div>
+          </div>
+          <span class="btn btn-primary btn-sm">Preencher →</span>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL — Checklist
+══════════════════════════════ -->
+<div class="cl-modal-overlay" id="cl-modal-overlay">
+  <div class="cl-modal" id="cl-modal">
+    <div class="cl-modal-header">
+      <h3 id="cl-modal-title">Checklist</h3>
+      <button class="modal-close-btn" onclick="fecharChecklist()">✕</button>
+    </div>
+    <div class="cl-modal-body" id="cl-modal-body">
+      <!-- renderizado via JS -->
+    </div>
+    <div class="cl-modal-footer">
+      <span id="cl-save-status" style="font-size:.8rem;color:var(--text-muted);margin-right:auto;"></span>
+      <button class="btn btn-ghost" onclick="fecharChecklist()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarChecklist()">💾 Salvar respostas</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCRIPTS
+══════════════════════════════ -->
+<script>
+const produtoId    = <%= produto.id %>;
+const rotulosData  = <%- JSON.stringify(rotulos || []) %>;
+let clAtualId      = null;
+
+/* ── Abas ── */
+function trocarAba(id) {
+  const ids = ['identificacao','rotulo','arquivos','analise'];
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ids[i] === id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('aba-' + id).classList.add('active');
+  history.replaceState(null, '', `?tab=${id}`);
+}
+
+/* ── Exportar rótulos como JSON com imagens em base64 ── */
+async function exportarRotulos() {
+  const btn = document.getElementById('btn-exportar');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite;">&#8635;</span> Exportando...';
+
+  const exportData = {
+    produtoId,
+    exportadoEm: new Date().toISOString(),
+    rotulos: [],
+  };
+
+  for (const r of rotulosData) {
+    const rotuloExport = {
+      id:                   r.id,
+      conteudoLiquido:      r.conteudoLiquido,
+      unidadeMedida:        r.unidadeMedida,
+      fabricante:           r.fabricante,
+      cnpjFabricante:       r.cnpjFabricante,
+      servicoInspecao:      r.servicoInspecao,
+      condicoesConservacao: r.condicoesConservacao,
+      fotos: [],
+    };
+
+    for (const foto of (r.fotos || [])) {
+      try {
+        const resp   = await fetch(`/uploads/produtos/${foto.nomeSalvo}`);
+        const blob   = await resp.blob();
+        const base64 = await blobParaBase64(blob);
+        rotuloExport.fotos.push({
+          nome:       foto.nomeOriginal,
+          nomeSalvo:  foto.nomeSalvo,
+          mimeType:   foto.mimeType || blob.type || 'image/jpeg',
+          base64,
+        });
+      } catch(e) {
+        console.warn('Não foi possível converter foto:', foto.nomeOriginal, e);
+      }
+    }
+
+    exportData.rotulos.push(rotuloExport);
+  }
+
+  // Gerar e baixar o JSON
+  const json    = JSON.stringify(exportData, null, 2);
+  const blob    = new Blob([json], { type: 'application/json' });
+  const url     = URL.createObjectURL(blob);
+  const anchor  = document.createElement('a');
+  anchor.href     = url;
+  anchor.download = `rotulos_produto_${produtoId}_${Date.now()}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+
+  btn.disabled = false;
+  btn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg> Exportar`;
+}
+
+function blobParaBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]); // remove prefixo data:...;base64,
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/* ── Rótulos ────────────────────────────────────────── */
+const UNIDADES = ['ml','L','g','kg','mg','un','pç','cx'];
+
+function abrirFormRotulo(rotulo) {
+  const wrap  = document.getElementById('rotulo-form-wrap');
+  const titulo = document.getElementById('rotulo-form-titulo');
+
+  // Limpar / preencher campos
+  document.getElementById('rf-id').value           = rotulo ? rotulo.id : '';
+  document.getElementById('rf-conteudo').value      = rotulo?.conteudoLiquido || '';
+  document.getElementById('rf-unidade').value       = rotulo?.unidadeMedida   || '';
+  document.getElementById('rf-fabricante').value    = rotulo?.fabricante       || '';
+  document.getElementById('rf-cnpj').value          = rotulo?.cnpjFabricante   || '';
+  document.getElementById('rf-inspecao').value      = rotulo?.servicoInspecao  || '';
+  document.getElementById('rf-conservacao').value   = rotulo?.condicoesConservacao || '';
+  titulo.textContent = rotulo ? 'Editar rótulo' : 'Novo rótulo';
+
+  // Fotos
+  const selectedIds = new Set((rotulo?.fotosIds || []).map(Number));
+  document.querySelectorAll('.rf-foto-item').forEach(el => {
+    const arqId = parseInt(el.dataset.id);
+    if (selectedIds.has(arqId)) {
+      el.classList.add('selected');
+    } else {
+      el.classList.remove('selected');
+    }
+  });
+
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('rotulo-form-status').textContent = '';
+}
+
+function fecharFormRotulo() {
+  document.getElementById('rotulo-form-wrap').style.display = 'none';
+}
+
+function toggleFotoSelect(id) {
+  const el = document.querySelector(`.rf-foto-item[data-id="${id}"]`);
+  if (!el) return;
+  el.classList.toggle('selected');
+}
+
+async function salvarRotulo() {
+  const status  = document.getElementById('rotulo-form-status');
+  const rotuloId = document.getElementById('rf-id').value;
+  const isEdit   = !!rotuloId;
+
+  const fotosIds = Array.from(document.querySelectorAll('.rf-foto-item.selected'))
+    .map(el => parseInt(el.dataset.id));
+
+  const payload = {
+    conteudoLiquido:      document.getElementById('rf-conteudo').value.trim(),
+    unidadeMedida:        document.getElementById('rf-unidade').value,
+    fabricante:           document.getElementById('rf-fabricante').value.trim(),
+    cnpjFabricante:       document.getElementById('rf-cnpj').value.trim(),
+    servicoInspecao:      document.getElementById('rf-inspecao').value.trim(),
+    condicoesConservacao: document.getElementById('rf-conservacao').value.trim(),
+    fotosIds,
+  };
+
+  status.textContent = 'Salvando...';
+
+  const url = isEdit
+    ? `/produtos/${produtoIdArq}/rotulos/${rotuloId}/editar`
+    : `/produtos/${produtoIdArq}/rotulos`;
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+
+    if (data.ok) {
+      status.textContent = '✅ Salvo!';
+      fecharFormRotulo();
+      // Atualizar o card na lista
+      const lista  = document.getElementById('rotulo-lista');
+      const empty  = document.getElementById('rotulo-empty');
+      const rotulos = lista.querySelectorAll('.rotulo-card');
+
+      if (isEdit) {
+        const old = document.getElementById(`rcard-${rotuloId}`);
+        if (old) old.replaceWith(buildRotuloCard(data.rotulo, old.dataset.idx || 0));
+      } else {
+        empty.style.display = 'none';
+        lista.appendChild(buildRotuloCard(data.rotulo, rotulos.length));
+      }
+    } else {
+      status.textContent = `❌ ${data.erro}`;
+    }
+  } catch(e) {
+    status.textContent = '❌ Erro de conexão.';
+  }
+}
+
+async function deletarRotulo(id) {
+  if (!confirm('Remover este rótulo?')) return;
+  try {
+    const resp = await fetch(`/produtos/${produtoIdArq}/rotulos/${id}/deletar`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.ok) {
+      document.getElementById(`rcard-${id}`)?.remove();
+      const lista = document.getElementById('rotulo-lista');
+      if (!lista.querySelector('.rotulo-card')) {
+        document.getElementById('rotulo-empty').style.display = '';
+      }
+      // Renumerar
+      lista.querySelectorAll('.rotulo-card .rcard-num').forEach((el, i) => el.textContent = `#${i+1}`);
+    }
+  } catch(e) { alert('Erro ao remover rótulo.'); }
+}
+
+function buildRotuloCard(r, idx) {
+  const card = document.createElement('div');
+  card.className = 'rotulo-card';
+  card.id = `rcard-${r.id}`;
+  card.dataset.idx = idx;
+
+  const badge = r.conteudoLiquido
+    ? `<span class="rcard-badge">${r.conteudoLiquido}${r.unidadeMedida ? ' '+r.unidadeMedida : ''}</span>`
+    : '';
+
+  let fieldsHtml = '';
+  if (r.cnpjFabricante)      fieldsHtml += `<div class="rcard-field"><span>CNPJ</span><p>${r.cnpjFabricante}</p></div>`;
+  if (r.servicoInspecao)     fieldsHtml += `<div class="rcard-field"><span>Inspeção</span><p>${r.servicoInspecao}</p></div>`;
+  if (r.condicoesConservacao) fieldsHtml += `<div class="rcard-field" style="grid-column:1/-1"><span>Conservação</span><p>${r.condicoesConservacao}</p></div>`;
+
+  let fotosHtml = '';
+  if (r.fotos && r.fotos.length > 0) {
+    fotosHtml = `<div class="rcard-fotos"><p class="rcard-fotos-label">Fotos do rótulo</p><div style="display:flex;flex-wrap:wrap;gap:.5rem;">`;
+    r.fotos.forEach(f => {
+      fotosHtml += `<div style="display:flex;align-items:center;gap:.4rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.3rem .5rem;">
+        <img src="/uploads/produtos/${f.nomeSalvo}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;"
+          onclick="abrirLightbox('/uploads/produtos/${f.nomeSalvo}')" title="${f.nomeOriginal}">
+        <span style="font-size:.75rem;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.nomeOriginal}</span>
+      </div>`;
+    });
+    fotosHtml += `</div></div>`;
+  }
+
+  card.innerHTML = `
+    <div class="rcard-header">
+      <div class="rcard-title">
+        <span class="rcard-num">#${parseInt(idx)+1}</span>
+        <strong>${r.fabricante || 'Sem fabricante'}</strong>
+        ${badge}
+      </div>
+      <div style="display:flex;gap:.4rem;">
+        <button class="btn btn-secondary btn-sm" onclick="abrirFormRotulo(${JSON.stringify(r).replace(/"/g,'&quot;')})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deletarRotulo(${r.id})">🗑️</button>
+      </div>
+    </div>
+    <div class="rcard-body">${fieldsHtml}</div>
+    ${fotosHtml}`;
+
+  return card;
+}
+
+/* ── Upload de arquivos ── */
+const produtoIdArq = <%= produto.id %>;
+
+function formatBytes(b) {
+  return b < 1024*1024 ? `${Math.round(b/1024)} KB` : `${(b/1024/1024).toFixed(1)} MB`;
+}
+
+function buildArquivoCard(arq) {
+  const div = document.createElement('div');
+  div.className = 'arquivo-card';
+  div.id = `arq-${arq.id}`;
+
+  if (arq.tipo === 'image') {
+    div.innerHTML = `
+      <img class="arquivo-thumb" src="/uploads/produtos/${arq.nomeSalvo}"
+        alt="${arq.nomeOriginal}" title="Clique para ampliar"
+        onclick="abrirLightbox('/uploads/produtos/${arq.nomeSalvo}')">`;
+  } else {
+    div.innerHTML = `
+      <div class="arquivo-pdf-thumb"
+        onclick="window.open('/uploads/produtos/${arq.nomeSalvo}','_blank')"
+        title="Abrir PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+          stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>`;
+  }
+
+  // Nome editável inline
+  div.innerHTML += `
+    <div class="arquivo-info">
+      <div class="arquivo-nome-wrap">
+        <span class="arquivo-nome" id="nome-txt-${arq.id}"
+          title="Clique para renomear" onclick="iniciarRename(${arq.id})">${arq.nomeOriginal}</span>
+        <input class="arquivo-nome-input" id="nome-inp-${arq.id}"
+          style="display:none;" value="${arq.nomeOriginal}"
+          onblur="salvarRename(${arq.id})"
+          onkeydown="if(event.key==='Enter')salvarRename(${arq.id});if(event.key==='Escape')cancelarRename(${arq.id});">
+      </div>
+      <div class="arquivo-meta">${formatBytes(arq.tamanho || 0)}</div>
+    </div>
+    <button class="arquivo-del" onclick="deletarArquivo(${arq.id})" title="Remover">✕</button>`;
+
+  return div;
+}
+
+
+/* ── PDF.js loader ── */
+async function getPdfjsLib() {
+  if (window._pdfjsLib) return window._pdfjsLib;
+  // Aguarda o módulo ES carregar e expor globalmente
+  const mod = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs');
+  mod.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+  window._pdfjsLib = mod;
+  return mod;
+}
+
+/* ── Converte PDF em array de File (JPG por página) ── */
+async function pdfParaJpgs(file, onPagina) {
+  const pdfjsLib = await getPdfjsLib();
+  const buffer   = await file.arrayBuffer();
+  const pdf      = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const total    = pdf.numPages;
+  const jpgFiles = [];
+
+  for (let i = 1; i <= total; i++) {
+    onPagina && onPagina(i, total);
+    const page     = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 2.0 }); // 200% = boa qualidade
+    const canvas   = document.createElement('canvas');
+    canvas.width   = viewport.width;
+    canvas.height  = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+    const baseName = file.name.replace(/\.pdf$/i, '');
+    const jpgName  = total === 1 ? `${baseName}.jpg` : `${baseName}_p${i}.jpg`;
+    jpgFiles.push(new File([blob], jpgName, { type: 'image/jpeg' }));
+  }
+  return jpgFiles;
+}
+
+async function processarArquivos(files) {
+  if (!files || files.length === 0) return;
+
+  const progress = document.getElementById('upload-progress');
+  const fill     = document.getElementById('upload-progress-fill');
+  const msg      = document.getElementById('upload-msg');
+  const pct      = document.getElementById('upload-pct');
+  const emptyDiv = document.getElementById('empty-arquivos');
+  const grid     = document.getElementById('arquivo-grid');
+
+  progress.classList.add('visible');
+
+  // Separar PDFs de imagens e converter PDFs
+  const filesFinais = [];
+  const arr = Array.from(files);
+
+  for (let i = 0; i < arr.length; i++) {
+    const f = arr[i];
+    if (f.type === 'application/pdf') {
+      msg.textContent = `Convertendo PDF "${f.name}"...`;
+      fill.style.width = '15%'; pct.textContent = '15%';
+      try {
+        const jpgs = await pdfParaJpgs(f, (pg, tot) => {
+          const p = Math.round(15 + (pg/tot)*55);
+          fill.style.width = p + '%'; pct.textContent = p + '%';
+          msg.textContent = `Convertendo página ${pg}/${tot}...`;
+        });
+        filesFinais.push(...jpgs);
+      } catch(e) {
+        console.error(e);
+        msg.textContent = `❌ Erro ao converter ${f.name}: ${e.message}`;
+      }
+    } else {
+      filesFinais.push(f);
+    }
+  }
+
+  if (filesFinais.length === 0) {
+    setTimeout(() => progress.classList.remove('visible'), 3000);
+    return;
+  }
+
+  msg.textContent = `Enviando ${filesFinais.length} arquivo(s)...`;
+  fill.style.width = '70%'; pct.textContent = '70%';
+
+  const fd = new FormData();
+  filesFinais.forEach(f => fd.append('arquivos', f));
+
+  try {
+    const resp = await fetch(`/produtos/${produtoIdArq}/arquivos`, {
+      method: 'POST',
+      body: fd,
+    });
+    fill.style.width = '100%'; pct.textContent = '100%';
+
+    const data = await resp.json();
+    if (data.ok) {
+      msg.textContent = `✅ ${data.arquivos.length} arquivo(s) enviado(s)!`;
+      data.arquivos.forEach(arq => {
+        grid.appendChild(buildArquivoCard(arq));
+        emptyDiv.style.display = 'none';
+      });
+      atualizarBadgeAba();
+    } else {
+      msg.textContent = `❌ ${data.erro || 'Erro no envio'}`;
+    }
+  } catch(e) {
+    msg.textContent = '❌ Erro de conexão.';
+  }
+
+  setTimeout(() => {
+    progress.classList.remove('visible');
+    fill.style.width = '0%';
+    document.getElementById('upload-input').value = '';
+  }, 3000);
+}
+
+async function deletarArquivo(id) {
+  if (!confirm('Remover este arquivo?')) return;
+  try {
+    const resp = await fetch(`/produtos/${produtoIdArq}/arquivos/${id}/deletar`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.ok) {
+      document.getElementById(`arq-${id}`)?.remove();
+      atualizarBadgeAba();
+      const grid = document.getElementById('arquivo-grid');
+      if (!grid.querySelector('.arquivo-card')) document.getElementById('empty-arquivos').style.display = '';
+    }
+  } catch(e) { alert('Erro ao remover arquivo.'); }
+}
+
+/* ── Renomear arquivo inline ── */
+function iniciarRename(id) {
+  document.getElementById(`nome-txt-${id}`).style.display = 'none';
+  const inp = document.getElementById(`nome-inp-${id}`);
+  inp.style.display = 'block';
+  inp.focus();
+  inp.select();
+}
+
+function cancelarRename(id) {
+  const txt = document.getElementById(`nome-txt-${id}`);
+  document.getElementById(`nome-inp-${id}`).style.display = 'none';
+  txt.style.display = 'block';
+}
+
+async function salvarRename(id) {
+  const inp  = document.getElementById(`nome-inp-${id}`);
+  const txt  = document.getElementById(`nome-txt-${id}`);
+  const nome = inp.value.trim();
+  if (!nome) { cancelarRename(id); return; }
+
+  try {
+    const resp = await fetch(`/produtos/${produtoIdArq}/arquivos/${id}/renomear`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nomeOriginal: nome }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      txt.textContent = data.nomeOriginal;
+      txt.title = data.nomeOriginal;
+      inp.value = data.nomeOriginal;
+    }
+  } catch(e) { /* silencioso */ }
+  cancelarRename(id);
+}
+
+function atualizarBadgeAba() {
+  const count = document.querySelectorAll('#arquivo-grid .arquivo-card').length;
+  // O badge está no 3º tab-btn (index 2)
+  const btn = document.querySelectorAll('.tab-btn')[2];
+  let badge = btn.querySelector('span[data-badge]');
+  if (count > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.dataset.badge = '1';
+      badge.style.cssText = 'background:var(--blue);color:#fff;border-radius:999px;font-size:.65rem;padding:.1rem .45rem;font-weight:700;margin-left:.2rem;';
+      btn.appendChild(badge);
+    }
+    badge.textContent = count;
+  } else {
+    badge?.remove();
+  }
+}
+
+/* ── Drag & Drop ── */
+const uploadZone = document.getElementById('upload-zone');
+if (uploadZone) {
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    processarArquivos(e.dataTransfer.files);
+  });
+}
+
+/* ── Lightbox ── */
+function abrirLightbox(src) {
+  const lb = document.getElementById('lightbox');
+  lb.querySelector('img').src = src;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function fecharLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { fecharLightbox(); fecharChecklist(); }
+});
+
+/* ── Modal Checklist ── */
+function abrirChecklist(cl, respostasMap) {
+  clAtualId = cl.id;
+  document.getElementById('cl-modal-title').textContent = `📋 ${cl.codigo} — ${cl.nome}`;
+  document.getElementById('cl-save-status').textContent = '';
+
+  const body = document.getElementById('cl-modal-body');
+  let html = '';
+
+  (cl.secoes || []).forEach(s => {
+    const itens = s.itens || [];
+
+    // Verifica se algum item aceita N/A para saber se exibe coluna
+    const temNA = itens.some(it => it.aceitaNaoAplicavel);
+
+    html += `<div class="cl-secao">`;
+    html += `<div class="cl-secao-title">📂 ${s.titulo}</div>`;
+    if (s.descricao) html += `<p class="cl-secao-desc">${s.descricao}</p>`;
+
+    if (itens.length === 0) {
+      html += `<p style="font-size:.8rem;color:var(--text-muted);padding:.5rem 0;">Nenhum item nesta seção.</p>`;
+    } else {
+      html += `<div style="overflow-x:auto;">`;
+      html += `<table class="cl-table">`;
+      html += `<thead><tr>`;
+      html += `<th class="th-pergunta">Pergunta</th>`;
+      html += `<th title="Conforme">✅<br><span style="font-size:.65rem;font-weight:600;">Conforme</span></th>`;
+      html += `<th title="Não conforme">❌<br><span style="font-size:.65rem;font-weight:600;">Não conf.</span></th>`;
+      if (temNA) html += `<th title="Não aplicável">➖<br><span style="font-size:.65rem;font-weight:600;">N/A</span></th>`;
+      html += `<th title="Não avaliado">⬜<br><span style="font-size:.65rem;font-weight:600;">N/Aval.</span></th>`;
+      html += `<th class="th-obs">Observação</th>`;
+      html += `</tr></thead><tbody>`;
+
+      itens.forEach(it => {
+        const r     = respostasMap[it.id] || {};
+        const atual = r.resultado || 'NAO_AVALIADO';
+        const obs   = r.observacao || '';
+        const cols  = ['CONFORME','NAO_CONFORME', ...(temNA ? ['NAO_APLICAVEL'] : []), 'NAO_AVALIADO'];
+
+        html += `<tr data-item-id="${it.id}">`;
+
+        // Pergunta (+ ajuda)
+        html += `<td class="td-pergunta">${it.pergunta}`;
+        if (it.descricaoAjuda) html += `<br><span class="td-ajuda" style="font-size:.73rem;color:var(--text-muted);font-style:italic;">${it.descricaoAjuda}</span>`;
+        html += `</td>`;
+
+        // Bolinhas
+        cols.forEach(col => {
+          html += `<td class="td-dot">`;
+          html += `<input class="cl-radio" type="radio" data-col="${col}"
+            name="item_${it.id}" id="r_${it.id}_${col}"
+            value="${col}" ${atual === col ? 'checked' : ''}>`;
+          html += `<label class="cl-dot-label" for="r_${it.id}_${col}" title="${col.replace(/_/g,' ')}"></label>`;
+          html += `</td>`;
+        });
+
+        // Observação inline
+        html += `<td><textarea class="cl-obs-inline" id="obs_${it.id}" rows="1"
+          placeholder="Obs...">${obs}</textarea></td>`;
+
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  });
+
+  if (!html) html = '<p style="color:var(--text-muted);font-size:.9rem;">Nenhum item nesta checklist.</p>';
+  body.innerHTML = html;
+
+  document.getElementById('cl-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharChecklist() {
+  document.getElementById('cl-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  clAtualId = null;
+}
+
+async function salvarChecklist() {
+  const status = document.getElementById('cl-save-status');
+  status.textContent = 'Salvando...';
+
+  const respostas = {};
+  // Itens agora estão em <tr data-item-id>
+  document.querySelectorAll('tr[data-item-id]').forEach(row => {
+    const itemId  = row.dataset.itemId;
+    const radioEl = row.querySelector(`input[name="item_${itemId}"]:checked`);
+    const obsEl   = document.getElementById(`obs_${itemId}`);
+    respostas[itemId] = {
+      resultado:  radioEl ? radioEl.value : 'NAO_AVALIADO',
+      observacao: obsEl ? obsEl.value : '',
+    };
+  });
+
+  try {
+    const resp = await fetch(`/produtos/${produtoId}/checklist/${clAtualId}/respostas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ respostas }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      status.textContent = '✅ Salvo!';
+      status.style.color = 'var(--success)';
+      setTimeout(() => { fecharChecklist(); location.reload(); }, 900);
+    } else {
+      status.textContent = '❌ Erro ao salvar.';
+      status.style.color = 'var(--danger)';
+    }
+  } catch(e) {
+    status.textContent = '❌ Erro de conexão.';
+    status.style.color = 'var(--danger)';
+  }
+}
+
+/* ── Fechar modais com ESC / overlay ── */
+document.getElementById('cl-modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('cl-modal-overlay')) fecharChecklist();
+});
+document.getElementById('lightbox').addEventListener('click', e => {
+  if (e.target === document.getElementById('lightbox')) fecharLightbox();
+});
+
+/* ── Auto-esconder alertas ── */
+setTimeout(() => {
+  const a = document.getElementById('alert-box');
+  if (a) { a.style.transition = 'opacity .4s'; a.style.opacity = '0'; }
+}, 4000);
+</script>
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="fecharLightbox()">✕</button>
+  <img src="" alt="Preview">
+</div>
+
+</body>
+</html>

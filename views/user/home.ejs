@@ -6,17 +6,73 @@
 </head>
 <body>
 
-<div class="home-root">
-  <div class="home-card fade-up">
-    <div class="welcome-icon">✅</div>
-    <h1>Bem-vindo!</h1>
-    <p>Você está autenticado como <strong><%= username %></strong>.<br>O sistema está em construção.</p>
-    <form action="/logout" method="POST">
-      <button type="submit" class="btn btn-ghost" style="width:100%;">
-        🚪 Sair da conta
-      </button>
-    </form>
+<%- include('../partials/_user-layout', { currentPage: 'inicio', username: username }) %>
+
+<div class="app-content">
+  <div class="page-header fade-up">
+    <h1>Bem-vindo, <%= username %>!</h1>
+    <p>Acompanhe seus produtos e avalie rótulos com inteligência artificial.</p>
   </div>
+
+  <!-- Cards de acesso rápido -->
+  <div class="cards-grid fade-up d1">
+
+    <div class="card">
+      <div class="card-body" style="display:flex; align-items:center; gap:1rem;">
+        <div style="font-size:2.5rem;">📦</div>
+        <div>
+          <p style="font-size:.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;">Catálogo</p>
+          <p style="font-size:1rem; font-weight:600; color:var(--text); margin-top:.2rem;">Meus Produtos</p>
+          <p style="font-size:.825rem; color:var(--text-muted); margin-top:.25rem; line-height:1.5;">Visualize e gerencie os produtos que você cadastrou no sistema.</p>
+          <a href="/produtos" class="btn btn-primary btn-sm" style="margin-top:.75rem;">Ver produtos</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body" style="display:flex; align-items:center; gap:1rem;">
+        <div style="font-size:2.5rem;">🤖</div>
+        <div>
+          <p style="font-size:.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;">Inteligência Artificial</p>
+          <p style="font-size:1rem; font-weight:600; color:var(--text); margin-top:.2rem;">Avaliação IA rótulo</p>
+          <p style="font-size:.825rem; color:var(--text-muted); margin-top:.25rem; line-height:1.5;">Envie a imagem do rótulo e receba uma análise automática de conformidade.</p>
+          <a href="/avaliacao-ia" class="btn btn-primary btn-sm" style="margin-top:.75rem;">Iniciar avaliação</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bloco informativo -->
+  <div class="card fade-up d2" style="margin-top:1.5rem;">
+    <div class="card-header">
+      <h2>ℹ️ Como funciona</h2>
+    </div>
+    <div class="card-body">
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:1.5rem;">
+
+        <div style="display:flex; flex-direction:column; gap:.5rem;">
+          <div style="width:36px; height:36px; background:var(--blue-light); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">1️⃣</div>
+          <p style="font-weight:600; color:var(--text); font-size:.9rem;">Cadastre seu produto</p>
+          <p style="font-size:.825rem; color:var(--text-muted); line-height:1.55;">Acesse a seção <strong>Produtos</strong> e registre as informações do item que deseja auditar.</p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:.5rem;">
+          <div style="width:36px; height:36px; background:var(--blue-light); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">2️⃣</div>
+          <p style="font-weight:600; color:var(--text); font-size:.9rem;">Envie a imagem do rótulo</p>
+          <p style="font-size:.825rem; color:var(--text-muted); line-height:1.55;">Na <strong>Avaliação IA rótulo</strong>, faça o upload da foto ou PDF do rótulo do produto.</p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:.5rem;">
+          <div style="width:36px; height:36px; background:var(--blue-light); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">3️⃣</div>
+          <p style="font-weight:600; color:var(--text); font-size:.9rem;">Receba o resultado</p>
+          <p style="font-size:.825rem; color:var(--text-muted); line-height:1.55;">A IA analisa a conformidade do rótulo e apresenta um relatório detalhado.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 </div>
 
 </body>
