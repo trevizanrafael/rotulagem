@@ -3,6 +3,13 @@
 <head>
   <%- include('../partials/_head') %>
   <title><%= produto.marca %> — FoodTech</title>
+  <!-- PDF.js para conversão de PDF em imagens no browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs" type="module" id="pdfjs-script"></script>
+  <script>
+    // Compat shim: exposto globalmente após carregamento
+    window._pdfjsReady = false;
+    window._pdfjsLib   = null;
+  </script>
   <style>
     /* ── Abas ── */
     .tabs-bar {
@@ -361,6 +368,31 @@
     }
     .arquivo-card:hover .arquivo-del { opacity: 1; }
 
+    /* Nome renomeável */
+    .arquivo-nome-wrap { position: relative; }
+    .arquivo-nome {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      display: block;
+    }
+    .arquivo-nome:hover { color: var(--blue); text-decoration: underline dotted; }
+    .arquivo-nome-input {
+      width: 100%;
+      padding: .2rem .35rem;
+      font-family: inherit;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--white);
+      border: 1.5px solid var(--blue);
+      border-radius: var(--radius);
+      outline: none;
+    }
+
     /* Lightbox */
     .lightbox {
       position: fixed;
@@ -464,7 +496,8 @@
         </button>
         <button class="tab-btn <%= tab === 'arquivos' ? 'active' : '' %>"
           role="tab" onclick="trocarAba('arquivos')">
-          📎 Rótulo
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Rótulo
           <% if (arquivos && arquivos.length > 0) { %>
           <span style="background:var(--blue);color:#fff;border-radius:999px;font-size:.65rem;padding:.1rem .45rem;font-weight:700;margin-left:.2rem;"><%= arquivos.length %></span>
           <% } %>
@@ -568,9 +601,17 @@
       <div class="upload-zone" id="upload-zone">
         <input type="file" id="upload-input" multiple accept="image/*,.pdf"
           onchange="processarArquivos(this.files)">
-        <div class="upload-zone-icon">📎</div>
+        <div class="upload-zone-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
+            style="color:var(--blue-dark);">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
         <div class="upload-zone-text">Arraste os arquivos aqui ou clique para selecionar</div>
-        <div class="upload-zone-sub">Imagens (JPG, PNG, WEBP) e PDF · Máx. 20 MB por arquivo</div>
+        <div class="upload-zone-sub">Imagens (JPG, PNG, WEBP) e PDF · Máx. 20 MB · PDFs são convertidos em imagens</div>
       </div>
 
       <!-- Barra de progresso -->
@@ -590,18 +631,32 @@
         <div class="arquivo-card" id="arq-<%= arq.id %>">
           <% if (arq.tipo === 'image') { %>
           <img class="arquivo-thumb" src="/uploads/produtos/<%= arq.nomeSalvo %>"
-            alt="<%= arq.nomeOriginal %>"
-            onclick="abrirLightbox('/uploads/produtos/<%= arq.nomeSalvo %>')"
-            title="<%= arq.nomeOriginal %>">
+            alt="<%= arq.nomeOriginal %>" title="Clique para ampliar"
+            onclick="abrirLightbox('/uploads/produtos/<%= arq.nomeSalvo %>')">
           <% } else { %>
           <div class="arquivo-pdf-thumb"
             onclick="window.open('/uploads/produtos/<%= arq.nomeSalvo %>','_blank')"
             title="Abrir PDF">
-            📄
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+              stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
           </div>
           <% } %>
           <div class="arquivo-info">
-            <div class="arquivo-nome" title="<%= arq.nomeOriginal %>"><%= arq.nomeOriginal %></div>
+            <div class="arquivo-nome-wrap">
+              <span class="arquivo-nome" id="nome-txt-<%= arq.id %>"
+                title="Clique para renomear"
+                onclick="iniciarRename(<%= arq.id %>)"><%= arq.nomeOriginal %></span>
+              <input class="arquivo-nome-input" id="nome-inp-<%= arq.id %>"
+                style="display:none;" value="<%= arq.nomeOriginal %>"
+                onblur="salvarRename(<%= arq.id %>)"
+                onkeydown="if(event.key==='Enter')salvarRename(<%= arq.id %>);if(event.key==='Escape')cancelarRename(<%= arq.id %>);">
+            </div>
             <div class="arquivo-meta"><%= Math.round((arq.tamanho||0)/1024) %> KB</div>
           </div>
           <button class="arquivo-del" onclick="deletarArquivo(<%= arq.id %>)" title="Remover">✕</button>
@@ -730,18 +785,35 @@ function buildArquivoCard(arq) {
   if (arq.tipo === 'image') {
     div.innerHTML = `
       <img class="arquivo-thumb" src="/uploads/produtos/${arq.nomeSalvo}"
-        alt="${arq.nomeOriginal}" title="${arq.nomeOriginal}"
+        alt="${arq.nomeOriginal}" title="Clique para ampliar"
         onclick="abrirLightbox('/uploads/produtos/${arq.nomeSalvo}')">`;
   } else {
     div.innerHTML = `
       <div class="arquivo-pdf-thumb"
         onclick="window.open('/uploads/produtos/${arq.nomeSalvo}','_blank')"
-        title="Abrir PDF">📄</div>`;
+        title="Abrir PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+          stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>`;
   }
 
+  // Nome editável inline
   div.innerHTML += `
     <div class="arquivo-info">
-      <div class="arquivo-nome" title="${arq.nomeOriginal}">${arq.nomeOriginal}</div>
+      <div class="arquivo-nome-wrap">
+        <span class="arquivo-nome" id="nome-txt-${arq.id}"
+          title="Clique para renomear" onclick="iniciarRename(${arq.id})">${arq.nomeOriginal}</span>
+        <input class="arquivo-nome-input" id="nome-inp-${arq.id}"
+          style="display:none;" value="${arq.nomeOriginal}"
+          onblur="salvarRename(${arq.id})"
+          onkeydown="if(event.key==='Enter')salvarRename(${arq.id});if(event.key==='Escape')cancelarRename(${arq.id});">
+      </div>
       <div class="arquivo-meta">${formatBytes(arq.tamanho || 0)}</div>
     </div>
     <button class="arquivo-del" onclick="deletarArquivo(${arq.id})" title="Remover">✕</button>`;
@@ -749,48 +821,104 @@ function buildArquivoCard(arq) {
   return div;
 }
 
+
+/* ── PDF.js loader ── */
+async function getPdfjsLib() {
+  if (window._pdfjsLib) return window._pdfjsLib;
+  // Aguarda o módulo ES carregar e expor globalmente
+  const mod = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs');
+  mod.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+  window._pdfjsLib = mod;
+  return mod;
+}
+
+/* ── Converte PDF em array de File (JPG por página) ── */
+async function pdfParaJpgs(file, onPagina) {
+  const pdfjsLib = await getPdfjsLib();
+  const buffer   = await file.arrayBuffer();
+  const pdf      = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const total    = pdf.numPages;
+  const jpgFiles = [];
+
+  for (let i = 1; i <= total; i++) {
+    onPagina && onPagina(i, total);
+    const page     = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 2.0 }); // 200% = boa qualidade
+    const canvas   = document.createElement('canvas');
+    canvas.width   = viewport.width;
+    canvas.height  = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+    const baseName = file.name.replace(/\.pdf$/i, '');
+    const jpgName  = total === 1 ? `${baseName}.jpg` : `${baseName}_p${i}.jpg`;
+    jpgFiles.push(new File([blob], jpgName, { type: 'image/jpeg' }));
+  }
+  return jpgFiles;
+}
+
 async function processarArquivos(files) {
   if (!files || files.length === 0) return;
 
-  const progress  = document.getElementById('upload-progress');
-  const fill      = document.getElementById('upload-progress-fill');
-  const msg       = document.getElementById('upload-msg');
-  const pct       = document.getElementById('upload-pct');
-  const emptyDiv  = document.getElementById('empty-arquivos');
-  const grid      = document.getElementById('arquivo-grid');
+  const progress = document.getElementById('upload-progress');
+  const fill     = document.getElementById('upload-progress-fill');
+  const msg      = document.getElementById('upload-msg');
+  const pct      = document.getElementById('upload-pct');
+  const emptyDiv = document.getElementById('empty-arquivos');
+  const grid     = document.getElementById('arquivo-grid');
 
   progress.classList.add('visible');
-  msg.textContent = `Enviando ${files.length} arquivo(s)...`;
+
+  // Separar PDFs de imagens e converter PDFs
+  const filesFinais = [];
+  const arr = Array.from(files);
+
+  for (let i = 0; i < arr.length; i++) {
+    const f = arr[i];
+    if (f.type === 'application/pdf') {
+      msg.textContent = `Convertendo PDF "${f.name}"...`;
+      fill.style.width = '15%'; pct.textContent = '15%';
+      try {
+        const jpgs = await pdfParaJpgs(f, (pg, tot) => {
+          const p = Math.round(15 + (pg/tot)*55);
+          fill.style.width = p + '%'; pct.textContent = p + '%';
+          msg.textContent = `Convertendo página ${pg}/${tot}...`;
+        });
+        filesFinais.push(...jpgs);
+      } catch(e) {
+        console.error(e);
+        msg.textContent = `❌ Erro ao converter ${f.name}: ${e.message}`;
+      }
+    } else {
+      filesFinais.push(f);
+    }
+  }
+
+  if (filesFinais.length === 0) {
+    setTimeout(() => progress.classList.remove('visible'), 3000);
+    return;
+  }
+
+  msg.textContent = `Enviando ${filesFinais.length} arquivo(s)...`;
+  fill.style.width = '70%'; pct.textContent = '70%';
 
   const fd = new FormData();
-  Array.from(files).forEach(f => fd.append('arquivos', f));
+  filesFinais.forEach(f => fd.append('arquivos', f));
 
   try {
-    // Simula progresso visual durante o envio
-    let fakeP = 0;
-    const timer = setInterval(() => {
-      fakeP = Math.min(fakeP + 8, 85);
-      fill.style.width = fakeP + '%';
-      pct.textContent  = fakeP + '%';
-    }, 120);
-
     const resp = await fetch(`/produtos/${produtoIdArq}/arquivos`, {
       method: 'POST',
       body: fd,
     });
-    clearInterval(timer);
-    fill.style.width = '100%';
-    pct.textContent  = '100%';
+    fill.style.width = '100%'; pct.textContent = '100%';
 
     const data = await resp.json();
-
     if (data.ok) {
       msg.textContent = `✅ ${data.arquivos.length} arquivo(s) enviado(s)!`;
       data.arquivos.forEach(arq => {
         grid.appendChild(buildArquivoCard(arq));
         emptyDiv.style.display = 'none';
       });
-      // Atualiza badge da aba
       atualizarBadgeAba();
     } else {
       msg.textContent = `❌ ${data.erro || 'Erro no envio'}`;
@@ -803,7 +931,7 @@ async function processarArquivos(files) {
     progress.classList.remove('visible');
     fill.style.width = '0%';
     document.getElementById('upload-input').value = '';
-  }, 2500);
+  }, 3000);
 }
 
 async function deletarArquivo(id) {
@@ -814,15 +942,47 @@ async function deletarArquivo(id) {
     if (data.ok) {
       document.getElementById(`arq-${id}`)?.remove();
       atualizarBadgeAba();
-      // Mostrar empty state se não houver mais arquivos
       const grid = document.getElementById('arquivo-grid');
-      if (!grid.querySelector('.arquivo-card')) {
-        document.getElementById('empty-arquivos').style.display = '';
-      }
+      if (!grid.querySelector('.arquivo-card')) document.getElementById('empty-arquivos').style.display = '';
     }
-  } catch(e) {
-    alert('Erro ao remover arquivo.');
-  }
+  } catch(e) { alert('Erro ao remover arquivo.'); }
+}
+
+/* ── Renomear arquivo inline ── */
+function iniciarRename(id) {
+  document.getElementById(`nome-txt-${id}`).style.display = 'none';
+  const inp = document.getElementById(`nome-inp-${id}`);
+  inp.style.display = 'block';
+  inp.focus();
+  inp.select();
+}
+
+function cancelarRename(id) {
+  const txt = document.getElementById(`nome-txt-${id}`);
+  document.getElementById(`nome-inp-${id}`).style.display = 'none';
+  txt.style.display = 'block';
+}
+
+async function salvarRename(id) {
+  const inp  = document.getElementById(`nome-inp-${id}`);
+  const txt  = document.getElementById(`nome-txt-${id}`);
+  const nome = inp.value.trim();
+  if (!nome) { cancelarRename(id); return; }
+
+  try {
+    const resp = await fetch(`/produtos/${produtoIdArq}/arquivos/${id}/renomear`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nomeOriginal: nome }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      txt.textContent = data.nomeOriginal;
+      txt.title = data.nomeOriginal;
+      inp.value = data.nomeOriginal;
+    }
+  } catch(e) { /* silencioso */ }
+  cancelarRename(id);
 }
 
 function atualizarBadgeAba() {

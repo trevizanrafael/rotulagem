@@ -29,6 +29,7 @@ router.post('/produtos/:id/checklist/:checklistId/respostas',         produtoDet
 router.post('/produtos/:id/arquivos',                                 produtoArquivoController.postArquivo);
 router.get('/produtos/:id/arquivos',                                  produtoArquivoController.getArquivos);
 router.post('/produtos/:id/arquivos/:arquivoId/deletar',              produtoArquivoController.deleteArquivo);
+router.post('/produtos/:id/arquivos/:arquivoId/renomear',             produtoArquivoController.renomearArquivo);
 
 // APIs JSON (dynamic dropdowns)
 router.get('/api/subcategorias',                    produtosController.getSubcategoriasPorCategoria);

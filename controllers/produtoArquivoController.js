@@ -110,4 +110,28 @@ const deleteArquivo = async (req, res) => {
   }
 };
 
-module.exports = { postArquivo, getArquivos, deleteArquivo };
+// ── POST /produtos/:id/arquivos/:arquivoId/renomear ───────────
+const renomearArquivo = async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ erro: 'Não autorizado' });
+
+  const { id, arquivoId } = req.params;
+  const { nomeOriginal } = req.body;
+
+  if (!nomeOriginal?.trim()) return res.status(400).json({ erro: 'Nome inválido' });
+
+  try {
+    const produto = await Produto.findOne({ where: { id, usuarioId: req.session.userId } });
+    if (!produto) return res.status(403).json({ erro: 'Produto não encontrado' });
+
+    const arq = await ProdutoArquivo.findOne({ where: { id: arquivoId, produtoId: produto.id } });
+    if (!arq) return res.status(404).json({ erro: 'Arquivo não encontrado' });
+
+    await arq.update({ nomeOriginal: nomeOriginal.trim() });
+    res.json({ ok: true, nomeOriginal: arq.nomeOriginal });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao renomear' });
+  }
+};
+
+module.exports = { postArquivo, getArquivos, deleteArquivo, renomearArquivo };
