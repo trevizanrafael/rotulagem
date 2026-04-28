@@ -71,9 +71,21 @@ const getProdutoDetalhe = async (req, res) => {
     const respostasMap = {};
     respostasDb.forEach(r => { respostasMap[r.checklistItemId] = r; });
 
+    // ★ Recalcular status sempre que a página é carregada (garante consistência
+    //   mesmo quando o admin adiciona/remove itens de checklist)
+    await recalcularStatus(produto, checklists);
+    await produto.reload(); // atualiza o objeto após possível update
+
     // Categorias para o form de edição
     const categorias = await CategoriaProduto.findAll({
       where: { status: 'ativo' }, order: [['nome', 'ASC']],
+    });
+
+    // Arquivos do produto
+    const ProdutoArquivo = require('../models/ProdutoArquivo');
+    const arquivos = await ProdutoArquivo.findAll({
+      where: { produtoId: produto.id },
+      order: [['createdAt', 'DESC']],
     });
 
     res.render('user/produto-detalhe', {
@@ -82,6 +94,7 @@ const getProdutoDetalhe = async (req, res) => {
       checklists,
       respostasMap,
       categorias,
+      arquivos,
       statusLabels: STATUS_LABELS,
       tab,
       sucesso: req.query.sucesso || null,
@@ -156,27 +169,36 @@ const postRespostas = async (req, res) => {
 };
 
 // ── Recalcular status do produto ──────────────────────────────
-async function recalcularStatus(produto) {
-  // Busca todos os itens de todos os checklists vinculados à subcategoria
-  const sub = await SubcategoriaProduto.findByPk(produto.subcategoriaId, {
-    include: [{
-      model: Checklist,
-      as: 'checklists',
-      through: { attributes: [] },
-      where: { status: 'ativo' },
-      required: false,
+// Aceita checklists pré-carregados para evitar nova query
+async function recalcularStatus(produto, checklistsPreload) {
+  // Proteger status de fases finais
+  if (produto.statusAnalise === 'AVALIADO_POR_IA' || produto.statusAnalise === 'PRONTO_PARA_IA') return;
+
+  let checklists = checklistsPreload;
+
+  // Se não veio pré-carregado, buscar no banco
+  if (!checklists) {
+    const sub = await SubcategoriaProduto.findByPk(produto.subcategoriaId, {
       include: [{
-        model: ChecklistSecao,
-        as: 'secoes',
+        model: Checklist,
+        as: 'checklists',
+        through: { attributes: [] },
         where: { status: 'ativo' },
         required: false,
-        include: [{ model: ChecklistItem, as: 'itens', where: { status: 'ativo' }, required: false }],
+        include: [{
+          model: ChecklistSecao,
+          as: 'secoes',
+          where: { status: 'ativo' },
+          required: false,
+          include: [{ model: ChecklistItem, as: 'itens', where: { status: 'ativo' }, required: false }],
+        }],
       }],
-    }],
-  });
+    });
+    checklists = sub?.checklists || [];
+  }
 
   const todosItens = [];
-  (sub?.checklists || []).forEach(cl =>
+  checklists.forEach(cl =>
     (cl.secoes || []).forEach(s =>
       (s.itens || []).forEach(i => todosItens.push(i.id))
     )
@@ -188,18 +210,15 @@ async function recalcularStatus(produto) {
     where: { produtoId: produto.id, checklistItemId: todosItens },
   });
 
+  // Todos os itens precisam ter resposta !== NAO_AVALIADO
   const respondidos = respostas.filter(r => r.resultado !== 'NAO_AVALIADO');
   const todosConcluidos = respondidos.length === todosItens.length;
 
-  let novoStatus = produto.statusAnalise;
+  const novoStatus = todosConcluidos ? 'CHECKLIST_CONCLUIDA' : 'CHECKLIST_EM_ANDAMENTO';
 
-  // Se ainda não foi avaliado por IA e não estava como PRONTO_PARA_IA
-  if (produto.statusAnalise === 'AVALIADO_POR_IA' || produto.statusAnalise === 'PRONTO_PARA_IA') {
-    return; // Não retroagir se já chegou nessas fases
+  if (novoStatus !== produto.statusAnalise) {
+    await produto.update({ statusAnalise: novoStatus });
   }
-
-  novoStatus = todosConcluidos ? 'CHECKLIST_CONCLUIDA' : 'CHECKLIST_EM_ANDAMENTO';
-  await produto.update({ statusAnalise: novoStatus });
 }
 
 module.exports = {

@@ -13,6 +13,7 @@ require('./models/ChecklistItem');
 require('./models/SubcategoriaChecklist');
 require('./models/Produto');
 require('./models/ProdutoRespostaItem');
+require('./models/ProdutoArquivo');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 
@@ -21,6 +22,8 @@ const PORT = process.env.PORT || 3000;
 
 // Arquivos estáticos
 app.use(express.static('public'));
+// Servir uploads de produtos
+app.use('/uploads', require('express').static(require('path').join(__dirname, 'public', 'uploads')));
 
 // Template engine
 app.set('view engine', 'ejs');

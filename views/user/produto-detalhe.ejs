@@ -265,6 +265,153 @@
       gap: 1rem;
     }
     @media(max-width:640px){ .rotulo-grid { grid-template-columns: 1fr; } }
+
+    /* ── Upload de arquivos ── */
+    .upload-zone {
+      border: 2.5px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: var(--bg);
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--blue);
+      background: var(--blue-light);
+    }
+    .upload-zone input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-zone-icon { font-size: 2.2rem; margin-bottom: .5rem; }
+    .upload-zone-text { font-size: .9rem; font-weight: 600; color: var(--text); }
+    .upload-zone-sub  { font-size: .78rem; color: var(--text-muted); margin-top: .25rem; }
+
+    /* Grid de arquivos */
+    .arquivo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .arquivo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow .18s, border-color .18s;
+      position: relative;
+    }
+    .arquivo-card:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--blue-mid);
+    }
+    .arquivo-thumb {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+    }
+    .arquivo-pdf-thumb {
+      width: 100%;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fef2f2;
+      font-size: 2.5rem;
+      cursor: pointer;
+    }
+    .arquivo-info {
+      padding: .5rem .6rem;
+      font-size: .75rem;
+    }
+    .arquivo-nome {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .arquivo-meta { color: var(--text-muted); margin-top: .1rem; }
+    .arquivo-del {
+      position: absolute;
+      top: .35rem;
+      right: .35rem;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(220,38,38,.85);
+      color: #fff;
+      border: none;
+      font-size: .8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .arquivo-card:hover .arquivo-del { opacity: 1; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .lightbox-close {
+      position: fixed;
+      top: 1rem;
+      right: 1.25rem;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    /* Upload progress */
+    .upload-progress {
+      margin-top: 1rem;
+      display: none;
+    }
+    .upload-progress.visible { display: block; }
+    .upload-progress-bar {
+      height: 6px;
+      background: var(--blue-light);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .upload-progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 999px;
+      width: 0%;
+      transition: width .3s ease;
+    }
   </style>
 </head>
 <body>
@@ -314,6 +461,13 @@
         <button class="tab-btn <%= tab === 'rotulo' ? 'active' : '' %>"
           role="tab" onclick="trocarAba('rotulo')">
           🏷️ Dados Rótulo
+        </button>
+        <button class="tab-btn <%= tab === 'arquivos' ? 'active' : '' %>"
+          role="tab" onclick="trocarAba('arquivos')">
+          📎 Rótulo
+          <% if (arquivos && arquivos.length > 0) { %>
+          <span style="background:var(--blue);color:#fff;border-radius:999px;font-size:.65rem;padding:.1rem .45rem;font-weight:700;margin-left:.2rem;"><%= arquivos.length %></span>
+          <% } %>
         </button>
         <button class="tab-btn <%= tab === 'analise' ? 'active' : '' %>"
           role="tab" onclick="trocarAba('analise')">
@@ -407,7 +561,67 @@
       </form>
     </div>
 
-    <!-- ══ ABA 3: ANÁLISE ══ -->
+    <!-- ══ ABA 3: RÓTULO (arquivos) ══ -->
+    <div id="aba-arquivos" class="tab-panel card-body <%= tab === 'arquivos' ? 'active' : '' %>">
+
+      <!-- Zona de upload -->
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="upload-input" multiple accept="image/*,.pdf"
+          onchange="processarArquivos(this.files)">
+        <div class="upload-zone-icon">📎</div>
+        <div class="upload-zone-text">Arraste os arquivos aqui ou clique para selecionar</div>
+        <div class="upload-zone-sub">Imagens (JPG, PNG, WEBP) e PDF · Máx. 20 MB por arquivo</div>
+      </div>
+
+      <!-- Barra de progresso -->
+      <div class="upload-progress" id="upload-progress">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text-muted);margin-bottom:.3rem;">
+          <span id="upload-msg">Enviando...</span>
+          <span id="upload-pct">0%</span>
+        </div>
+        <div class="upload-progress-bar">
+          <div class="upload-progress-fill" id="upload-progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Grid de arquivos -->
+      <div class="arquivo-grid" id="arquivo-grid">
+        <% (arquivos || []).forEach(arq => { %>
+        <div class="arquivo-card" id="arq-<%= arq.id %>">
+          <% if (arq.tipo === 'image') { %>
+          <img class="arquivo-thumb" src="/uploads/produtos/<%= arq.nomeSalvo %>"
+            alt="<%= arq.nomeOriginal %>"
+            onclick="abrirLightbox('/uploads/produtos/<%= arq.nomeSalvo %>')"
+            title="<%= arq.nomeOriginal %>">
+          <% } else { %>
+          <div class="arquivo-pdf-thumb"
+            onclick="window.open('/uploads/produtos/<%= arq.nomeSalvo %>','_blank')"
+            title="Abrir PDF">
+            📄
+          </div>
+          <% } %>
+          <div class="arquivo-info">
+            <div class="arquivo-nome" title="<%= arq.nomeOriginal %>"><%= arq.nomeOriginal %></div>
+            <div class="arquivo-meta"><%= Math.round((arq.tamanho||0)/1024) %> KB</div>
+          </div>
+          <button class="arquivo-del" onclick="deletarArquivo(<%= arq.id %>)" title="Remover">✕</button>
+        </div>
+        <% }) %>
+      </div>
+
+      <% if (!arquivos || arquivos.length === 0) { %>
+      <div id="empty-arquivos" class="empty-state" style="padding:1.5rem 0;">
+        <div class="empty-state-icon" style="font-size:1.8rem;">📎</div>
+        <p style="font-weight:600;color:var(--text);margin-bottom:.25rem;">Nenhum arquivo enviado</p>
+        <p>Arraste imagens ou PDFs do rótulo para começar.</p>
+      </div>
+      <% } else { %>
+      <div id="empty-arquivos" style="display:none;"></div>
+      <% } %>
+
+    </div>
+
+    <!-- ══ ABA 4: ANÁLISE ══ -->
     <div id="aba-analise" class="tab-panel card-body <%= tab === 'analise' ? 'active' : '' %>">
 
       <!-- Status -->
@@ -494,14 +708,167 @@ let clAtualId   = null;
 
 /* ── Abas ── */
 function trocarAba(id) {
-  document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    const ids = ['identificacao','rotulo','analise'];
-    b.classList.toggle('active', ids[i] === id);
-  });
+  const ids = ['identificacao','rotulo','arquivos','analise'];
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ids[i] === id));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('aba-' + id).classList.add('active');
-  history.replaceState(null,'',`?tab=${id}`);
+  history.replaceState(null, '', `?tab=${id}`);
 }
+
+/* ── Upload de arquivos ── */
+const produtoIdArq = <%= produto.id %>;
+
+function formatBytes(b) {
+  return b < 1024*1024 ? `${Math.round(b/1024)} KB` : `${(b/1024/1024).toFixed(1)} MB`;
+}
+
+function buildArquivoCard(arq) {
+  const div = document.createElement('div');
+  div.className = 'arquivo-card';
+  div.id = `arq-${arq.id}`;
+
+  if (arq.tipo === 'image') {
+    div.innerHTML = `
+      <img class="arquivo-thumb" src="/uploads/produtos/${arq.nomeSalvo}"
+        alt="${arq.nomeOriginal}" title="${arq.nomeOriginal}"
+        onclick="abrirLightbox('/uploads/produtos/${arq.nomeSalvo}')">`;
+  } else {
+    div.innerHTML = `
+      <div class="arquivo-pdf-thumb"
+        onclick="window.open('/uploads/produtos/${arq.nomeSalvo}','_blank')"
+        title="Abrir PDF">📄</div>`;
+  }
+
+  div.innerHTML += `
+    <div class="arquivo-info">
+      <div class="arquivo-nome" title="${arq.nomeOriginal}">${arq.nomeOriginal}</div>
+      <div class="arquivo-meta">${formatBytes(arq.tamanho || 0)}</div>
+    </div>
+    <button class="arquivo-del" onclick="deletarArquivo(${arq.id})" title="Remover">✕</button>`;
+
+  return div;
+}
+
+async function processarArquivos(files) {
+  if (!files || files.length === 0) return;
+
+  const progress  = document.getElementById('upload-progress');
+  const fill      = document.getElementById('upload-progress-fill');
+  const msg       = document.getElementById('upload-msg');
+  const pct       = document.getElementById('upload-pct');
+  const emptyDiv  = document.getElementById('empty-arquivos');
+  const grid      = document.getElementById('arquivo-grid');
+
+  progress.classList.add('visible');
+  msg.textContent = `Enviando ${files.length} arquivo(s)...`;
+
+  const fd = new FormData();
+  Array.from(files).forEach(f => fd.append('arquivos', f));
+
+  try {
+    // Simula progresso visual durante o envio
+    let fakeP = 0;
+    const timer = setInterval(() => {
+      fakeP = Math.min(fakeP + 8, 85);
+      fill.style.width = fakeP + '%';
+      pct.textContent  = fakeP + '%';
+    }, 120);
+
+    const resp = await fetch(`/produtos/${produtoIdArq}/arquivos`, {
+      method: 'POST',
+      body: fd,
+    });
+    clearInterval(timer);
+    fill.style.width = '100%';
+    pct.textContent  = '100%';
+
+    const data = await resp.json();
+
+    if (data.ok) {
+      msg.textContent = `✅ ${data.arquivos.length} arquivo(s) enviado(s)!`;
+      data.arquivos.forEach(arq => {
+        grid.appendChild(buildArquivoCard(arq));
+        emptyDiv.style.display = 'none';
+      });
+      // Atualiza badge da aba
+      atualizarBadgeAba();
+    } else {
+      msg.textContent = `❌ ${data.erro || 'Erro no envio'}`;
+    }
+  } catch(e) {
+    msg.textContent = '❌ Erro de conexão.';
+  }
+
+  setTimeout(() => {
+    progress.classList.remove('visible');
+    fill.style.width = '0%';
+    document.getElementById('upload-input').value = '';
+  }, 2500);
+}
+
+async function deletarArquivo(id) {
+  if (!confirm('Remover este arquivo?')) return;
+  try {
+    const resp = await fetch(`/produtos/${produtoIdArq}/arquivos/${id}/deletar`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.ok) {
+      document.getElementById(`arq-${id}`)?.remove();
+      atualizarBadgeAba();
+      // Mostrar empty state se não houver mais arquivos
+      const grid = document.getElementById('arquivo-grid');
+      if (!grid.querySelector('.arquivo-card')) {
+        document.getElementById('empty-arquivos').style.display = '';
+      }
+    }
+  } catch(e) {
+    alert('Erro ao remover arquivo.');
+  }
+}
+
+function atualizarBadgeAba() {
+  const count = document.querySelectorAll('#arquivo-grid .arquivo-card').length;
+  // O badge está no 3º tab-btn (index 2)
+  const btn = document.querySelectorAll('.tab-btn')[2];
+  let badge = btn.querySelector('span[data-badge]');
+  if (count > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.dataset.badge = '1';
+      badge.style.cssText = 'background:var(--blue);color:#fff;border-radius:999px;font-size:.65rem;padding:.1rem .45rem;font-weight:700;margin-left:.2rem;';
+      btn.appendChild(badge);
+    }
+    badge.textContent = count;
+  } else {
+    badge?.remove();
+  }
+}
+
+/* ── Drag & Drop ── */
+const uploadZone = document.getElementById('upload-zone');
+if (uploadZone) {
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    processarArquivos(e.dataTransfer.files);
+  });
+}
+
+/* ── Lightbox ── */
+function abrirLightbox(src) {
+  const lb = document.getElementById('lightbox');
+  lb.querySelector('img').src = src;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function fecharLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { fecharLightbox(); fecharChecklist(); }
+});
 
 /* ── Modal Checklist ── */
 function abrirChecklist(cl, respostasMap) {
@@ -621,12 +988,12 @@ async function salvarChecklist() {
   }
 }
 
-/* ── Fechar modal com ESC / overlay ── */
+/* ── Fechar modais com ESC / overlay ── */
 document.getElementById('cl-modal-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('cl-modal-overlay')) fecharChecklist();
 });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') fecharChecklist();
+document.getElementById('lightbox').addEventListener('click', e => {
+  if (e.target === document.getElementById('lightbox')) fecharLightbox();
 });
 
 /* ── Auto-esconder alertas ── */
@@ -635,6 +1002,11 @@ setTimeout(() => {
   if (a) { a.style.transition = 'opacity .4s'; a.style.opacity = '0'; }
 }, 4000);
 </script>
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="fecharLightbox()">✕</button>
+  <img src="" alt="Preview">
+</div>
 
 </body>
 </html>
