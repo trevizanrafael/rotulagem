@@ -4,6 +4,7 @@ const userController            = require('../controllers/userController');
 const produtosController        = require('../controllers/produtosController');
 const produtoDetalheController  = require('../controllers/produtoDetalheController');
 const produtoArquivoController  = require('../controllers/produtoArquivoController');
+const produtoRotuloController   = require('../controllers/produtoRotuloController');
 
 // Auth
 router.get('/login',  userController.getLogin);
@@ -30,6 +31,11 @@ router.post('/produtos/:id/arquivos',                                 produtoArq
 router.get('/produtos/:id/arquivos',                                  produtoArquivoController.getArquivos);
 router.post('/produtos/:id/arquivos/:arquivoId/deletar',              produtoArquivoController.deleteArquivo);
 router.post('/produtos/:id/arquivos/:arquivoId/renomear',             produtoArquivoController.renomearArquivo);
+
+// Produto — Rótulos (múltiplos)
+router.post('/produtos/:id/rotulos',                                  produtoRotuloController.postRotulo);
+router.post('/produtos/:id/rotulos/:rotuloId/editar',                 produtoRotuloController.putRotulo);
+router.post('/produtos/:id/rotulos/:rotuloId/deletar',                produtoRotuloController.deleteRotulo);
 
 // APIs JSON (dynamic dropdowns)
 router.get('/api/subcategorias',                    produtosController.getSubcategoriasPorCategoria);

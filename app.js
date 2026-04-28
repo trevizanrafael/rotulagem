@@ -14,6 +14,7 @@ require('./models/SubcategoriaChecklist');
 require('./models/Produto');
 require('./models/ProdutoRespostaItem');
 require('./models/ProdutoArquivo');
+require('./models/ProdutoRotulo');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 

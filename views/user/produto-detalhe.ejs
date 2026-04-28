@@ -444,6 +444,83 @@
       width: 0%;
       transition: width .3s ease;
     }
+
+    /* ── Cards de rótulo ── */
+    .rotulo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: .85rem;
+      overflow: hidden;
+      transition: box-shadow .18s;
+    }
+    .rotulo-card:hover { box-shadow: var(--shadow); }
+    .rcard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .9rem 1.25rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      gap: .75rem;
+    }
+    .rcard-title {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+    .rcard-num {
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .1rem .4rem;
+    }
+    .rcard-badge {
+      background: var(--blue-light);
+      color: var(--blue);
+      border: 1px solid var(--blue-mid);
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: .15rem .65rem;
+    }
+    .rcard-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .5rem 1rem;
+      padding: .9rem 1.25rem;
+    }
+    .rcard-field span {
+      display: block;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .2rem;
+    }
+    .rcard-field p { font-size: .875rem; color: var(--text); }
+    .rcard-fotos {
+      padding: .75rem 1.25rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .rcard-fotos-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: .5rem;
+    }
+    /* Foto selecionada no picker */
+    .rf-foto-item.selected { border-color: var(--blue) !important; }
+    .rf-foto-item.selected .rf-foto-check { display: flex !important; }
   </style>
 </head>
 <body>
@@ -539,60 +616,145 @@
 
     <!-- ══ ABA 2: DADOS RÓTULO ══ -->
     <div id="aba-rotulo" class="tab-panel card-body <%= tab === 'rotulo' ? 'active' : '' %>">
-      <form action="/produtos/<%= produto.id %>/rotulo" method="POST">
-        <div class="rotulo-grid">
 
-          <div class="form-group">
-            <label for="conteudoLiquido">Conteúdo líquido</label>
-            <input type="text" id="conteudoLiquido" name="conteudoLiquido"
-              value="<%= produto.conteudoLiquido || '' %>"
-              placeholder="Ex: 1000">
+      <!-- Cabeçalho da seção -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.6rem;">
+        <div>
+          <p style="font-size:.7rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-light);margin-bottom:.2rem;">Rótulos cadastrados</p>
+          <p style="font-size:.82rem;color:var(--text-muted);">Cada entrada representa um rótulo/embalagem diferente deste produto.</p>
+        </div>
+        <div style="display:flex;gap:.5rem;">
+          <button class="btn btn-secondary btn-sm" id="btn-exportar" onclick="exportarRotulos()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="abrirFormRotulo(null)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo rótulo
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulário de adicionar/editar (oculto por padrão) -->
+      <div id="rotulo-form-wrap" style="display:none;margin-bottom:1.5rem;">
+        <div style="background:var(--bg);border:1.5px solid var(--blue-mid);border-radius:var(--radius-lg);padding:1.25rem 1.4rem;">
+          <p style="font-size:.75rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--blue);margin-bottom:1rem;" id="rotulo-form-titulo">Novo rótulo</p>
+          <input type="hidden" id="rf-id" value="">
+          <div class="rotulo-grid">
+            <div class="form-group">
+              <label for="rf-conteudo">Conteúdo líquido</label>
+              <input type="text" id="rf-conteudo" placeholder="Ex: 1000">
+            </div>
+            <div class="form-group">
+              <label for="rf-unidade">Unidade de medida</label>
+              <select id="rf-unidade">
+                <option value="">Selecione...</option>
+                <% ['ml','L','g','kg','mg','un','pç','cx'].forEach(u => { %>
+                <option value="<%= u %>"><%= u %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label for="rf-fabricante">Fabricante</label>
+              <input type="text" id="rf-fabricante" placeholder="Razão social do fabricante">
+            </div>
+            <div class="form-group">
+              <label for="rf-cnpj">CNPJ do fabricante</label>
+              <input type="text" id="rf-cnpj" placeholder="00.000.000/0000-00">
+            </div>
+            <div class="form-group">
+              <label for="rf-inspecao">Serviço de inspeção</label>
+              <input type="text" id="rf-inspecao" placeholder="Ex: SIF 1234, SISBI">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label for="rf-conservacao">Condições de conservação</label>
+              <textarea id="rf-conservacao" rows="2" style="width:100%;padding:.65rem .9rem;font-family:inherit;font-size:.875rem;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);outline:none;resize:vertical;" placeholder="Ex: Manter refrigerado entre 2°C e 8°C"></textarea>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="unidadeMedida">Unidade de medida</label>
-            <select id="unidadeMedida" name="unidadeMedida">
-              <option value="">Selecione...</option>
-              <% ['ml','L','g','kg','mg','un','pç','cx'].forEach(u => { %>
-              <option value="<%= u %>" <%= produto.unidadeMedida === u ? 'selected' : '' %>><%= u %></option>
+          <!-- Seletor de fotos -->
+          <% if (arquivos && arquivos.filter(a => a.tipo === 'image').length > 0) { %>
+          <div style="margin-top:1rem;">
+            <p style="font-size:.75rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-muted);margin-bottom:.6rem;">Fotos referentes a este rótulo</p>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;" id="rf-foto-picker">
+              <% arquivos.filter(a => a.tipo === 'image').forEach(arq => { %>
+              <div class="rf-foto-item" data-id="<%= arq.id %>"
+                onclick="toggleFotoSelect(<%= arq.id %>)"
+                style="position:relative;cursor:pointer;border-radius:var(--radius);overflow:hidden;border:2.5px solid transparent;transition:border-color .15s;width:80px;">
+                <img src="/uploads/produtos/<%= arq.nomeSalvo %>"
+                  style="width:80px;height:72px;object-fit:cover;display:block;"
+                  title="<%= arq.nomeOriginal %>">
+                <div style="padding:.25rem .3rem;background:var(--surface);font-size:.65rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;">
+                  <%= arq.nomeOriginal %>
+                </div>
+                <div class="rf-foto-check" style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;font-size:.65rem;display:none;align-items:center;justify-content:center;">✓</div>
+              </div>
               <% }) %>
-            </select>
+            </div>
           </div>
+          <% } %>
 
-          <div class="form-group" style="grid-column:1/-1;">
-            <label for="fabricante">Fabricante</label>
-            <input type="text" id="fabricante" name="fabricante"
-              value="<%= produto.fabricante || '' %>"
-              placeholder="Razão social do fabricante">
+          <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.1rem;">
+            <span id="rotulo-form-status" style="font-size:.8rem;color:var(--text-muted);align-self:center;margin-right:auto;"></span>
+            <button class="btn btn-ghost btn-sm" onclick="fecharFormRotulo()">Cancelar</button>
+            <button class="btn btn-primary btn-sm" onclick="salvarRotulo()">💾 Salvar rótulo</button>
           </div>
-
-          <div class="form-group">
-            <label for="cnpjFabricante">CNPJ do fabricante</label>
-            <input type="text" id="cnpjFabricante" name="cnpjFabricante"
-              value="<%= produto.cnpjFabricante || '' %>"
-              placeholder="00.000.000/0000-00">
-          </div>
-
-          <div class="form-group">
-            <label for="servicoInspecao">Serviço de inspeção</label>
-            <input type="text" id="servicoInspecao" name="servicoInspecao"
-              value="<%= produto.servicoInspecao || '' %>"
-              placeholder="Ex: SIF 1234, SISP, SISBI">
-          </div>
-
-          <div class="form-group" style="grid-column:1/-1;">
-            <label for="condicoesConservacao">Condições de conservação</label>
-            <textarea id="condicoesConservacao" name="condicoesConservacao" rows="3"
-              style="width:100%;padding:.65rem .9rem;font-family:inherit;font-size:.925rem;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);outline:none;resize:vertical;"
-              placeholder="Ex: Manter refrigerado entre 2°C e 8°C"><%= produto.condicoesConservacao || '' %></textarea>
-          </div>
-
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
-          <button type="submit" class="btn btn-primary">💾 Salvar dados do rótulo</button>
+      </div>
+
+      <!-- Lista de rótulos -->
+      <div id="rotulo-lista">
+        <% if (!rotulos || rotulos.length === 0) { %>
+        <div id="rotulo-empty" style="text-align:center;padding:2rem 1rem;color:var(--text-muted);">
+          <div style="font-size:1.8rem;margin-bottom:.5rem;">🏷️</div>
+          <p style="font-weight:600;color:var(--text);margin-bottom:.2rem;">Nenhum rótulo cadastrado</p>
+          <p style="font-size:.85rem;">Clique em "Novo rótulo" para adicionar.</p>
         </div>
-      </form>
+        <% } else { %>
+        <div id="rotulo-empty" style="display:none;"></div>
+        <% } %>
+
+        <% (rotulos || []).forEach((r, i) => { %>
+        <div class="rotulo-card" id="rcard-<%= r.id %>">
+          <div class="rcard-header">
+            <div class="rcard-title">
+              <span class="rcard-num">#<%= i+1 %></span>
+              <strong><%= r.fabricante || 'Sem fabricante' %></strong>
+              <% if (r.conteudoLiquido) { %>
+              <span class="rcard-badge"><%= r.conteudoLiquido %><%= r.unidadeMedida ? ' '+r.unidadeMedida : '' %></span>
+              <% } %>
+            </div>
+            <div style="display:flex;gap:.4rem;">
+              <button class="btn btn-secondary btn-sm"
+                onclick="abrirFormRotulo(<%= JSON.stringify(r) %>)">✏️ Editar</button>
+              <button class="btn btn-danger btn-sm"
+                onclick="deletarRotulo(<%= r.id %>)">🗑️</button>
+            </div>
+          </div>
+          <div class="rcard-body">
+            <% if (r.cnpjFabricante) { %><div class="rcard-field"><span>CNPJ</span><p><%= r.cnpjFabricante %></p></div><% } %>
+            <% if (r.servicoInspecao) { %><div class="rcard-field"><span>Inspeção</span><p><%= r.servicoInspecao %></p></div><% } %>
+            <% if (r.condicoesConservacao) { %><div class="rcard-field" style="grid-column:1/-1;"><span>Conservação</span><p><%= r.condicoesConservacao %></p></div><% } %>
+          </div>
+          <% if (r.fotos && r.fotos.length > 0) { %>
+          <div class="rcard-fotos">
+            <p class="rcard-fotos-label">Fotos do rótulo</p>
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+              <% r.fotos.forEach(f => { %>
+              <div style="display:flex;align-items:center;gap:.4rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.3rem .5rem;">
+                <img src="/uploads/produtos/<%= f.nomeSalvo %>" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;"
+                  onclick="abrirLightbox('/uploads/produtos/<%= f.nomeSalvo %>')" title="<%= f.nomeOriginal %>">
+                <span style="font-size:.75rem;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= f.nomeOriginal %></span>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+          <% } %>
+        </div>
+        <% }) %>
+      </div>
     </div>
+
 
     <!-- ══ ABA 3: RÓTULO (arquivos) ══ -->
     <div id="aba-arquivos" class="tab-panel card-body <%= tab === 'arquivos' ? 'active' : '' %>">
@@ -758,8 +920,9 @@
      SCRIPTS
 ══════════════════════════════ -->
 <script>
-const produtoId = <%= produto.id %>;
-let clAtualId   = null;
+const produtoId    = <%= produto.id %>;
+const rotulosData  = <%- JSON.stringify(rotulos || []) %>;
+let clAtualId      = null;
 
 /* ── Abas ── */
 function trocarAba(id) {
@@ -768,6 +931,238 @@ function trocarAba(id) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('aba-' + id).classList.add('active');
   history.replaceState(null, '', `?tab=${id}`);
+}
+
+/* ── Exportar rótulos como JSON com imagens em base64 ── */
+async function exportarRotulos() {
+  const btn = document.getElementById('btn-exportar');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite;">&#8635;</span> Exportando...';
+
+  const exportData = {
+    produtoId,
+    exportadoEm: new Date().toISOString(),
+    rotulos: [],
+  };
+
+  for (const r of rotulosData) {
+    const rotuloExport = {
+      id:                   r.id,
+      conteudoLiquido:      r.conteudoLiquido,
+      unidadeMedida:        r.unidadeMedida,
+      fabricante:           r.fabricante,
+      cnpjFabricante:       r.cnpjFabricante,
+      servicoInspecao:      r.servicoInspecao,
+      condicoesConservacao: r.condicoesConservacao,
+      fotos: [],
+    };
+
+    for (const foto of (r.fotos || [])) {
+      try {
+        const resp   = await fetch(`/uploads/produtos/${foto.nomeSalvo}`);
+        const blob   = await resp.blob();
+        const base64 = await blobParaBase64(blob);
+        rotuloExport.fotos.push({
+          nome:       foto.nomeOriginal,
+          nomeSalvo:  foto.nomeSalvo,
+          mimeType:   foto.mimeType || blob.type || 'image/jpeg',
+          base64,
+        });
+      } catch(e) {
+        console.warn('Não foi possível converter foto:', foto.nomeOriginal, e);
+      }
+    }
+
+    exportData.rotulos.push(rotuloExport);
+  }
+
+  // Gerar e baixar o JSON
+  const json    = JSON.stringify(exportData, null, 2);
+  const blob    = new Blob([json], { type: 'application/json' });
+  const url     = URL.createObjectURL(blob);
+  const anchor  = document.createElement('a');
+  anchor.href     = url;
+  anchor.download = `rotulos_produto_${produtoId}_${Date.now()}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+
+  btn.disabled = false;
+  btn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg> Exportar`;
+}
+
+function blobParaBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]); // remove prefixo data:...;base64,
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/* ── Rótulos ────────────────────────────────────────── */
+const UNIDADES = ['ml','L','g','kg','mg','un','pç','cx'];
+
+function abrirFormRotulo(rotulo) {
+  const wrap  = document.getElementById('rotulo-form-wrap');
+  const titulo = document.getElementById('rotulo-form-titulo');
+
+  // Limpar / preencher campos
+  document.getElementById('rf-id').value           = rotulo ? rotulo.id : '';
+  document.getElementById('rf-conteudo').value      = rotulo?.conteudoLiquido || '';
+  document.getElementById('rf-unidade').value       = rotulo?.unidadeMedida   || '';
+  document.getElementById('rf-fabricante').value    = rotulo?.fabricante       || '';
+  document.getElementById('rf-cnpj').value          = rotulo?.cnpjFabricante   || '';
+  document.getElementById('rf-inspecao').value      = rotulo?.servicoInspecao  || '';
+  document.getElementById('rf-conservacao').value   = rotulo?.condicoesConservacao || '';
+  titulo.textContent = rotulo ? 'Editar rótulo' : 'Novo rótulo';
+
+  // Fotos
+  const selectedIds = new Set((rotulo?.fotosIds || []).map(Number));
+  document.querySelectorAll('.rf-foto-item').forEach(el => {
+    const arqId = parseInt(el.dataset.id);
+    if (selectedIds.has(arqId)) {
+      el.classList.add('selected');
+    } else {
+      el.classList.remove('selected');
+    }
+  });
+
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('rotulo-form-status').textContent = '';
+}
+
+function fecharFormRotulo() {
+  document.getElementById('rotulo-form-wrap').style.display = 'none';
+}
+
+function toggleFotoSelect(id) {
+  const el = document.querySelector(`.rf-foto-item[data-id="${id}"]`);
+  if (!el) return;
+  el.classList.toggle('selected');
+}
+
+async function salvarRotulo() {
+  const status  = document.getElementById('rotulo-form-status');
+  const rotuloId = document.getElementById('rf-id').value;
+  const isEdit   = !!rotuloId;
+
+  const fotosIds = Array.from(document.querySelectorAll('.rf-foto-item.selected'))
+    .map(el => parseInt(el.dataset.id));
+
+  const payload = {
+    conteudoLiquido:      document.getElementById('rf-conteudo').value.trim(),
+    unidadeMedida:        document.getElementById('rf-unidade').value,
+    fabricante:           document.getElementById('rf-fabricante').value.trim(),
+    cnpjFabricante:       document.getElementById('rf-cnpj').value.trim(),
+    servicoInspecao:      document.getElementById('rf-inspecao').value.trim(),
+    condicoesConservacao: document.getElementById('rf-conservacao').value.trim(),
+    fotosIds,
+  };
+
+  status.textContent = 'Salvando...';
+
+  const url = isEdit
+    ? `/produtos/${produtoIdArq}/rotulos/${rotuloId}/editar`
+    : `/produtos/${produtoIdArq}/rotulos`;
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+
+    if (data.ok) {
+      status.textContent = '✅ Salvo!';
+      fecharFormRotulo();
+      // Atualizar o card na lista
+      const lista  = document.getElementById('rotulo-lista');
+      const empty  = document.getElementById('rotulo-empty');
+      const rotulos = lista.querySelectorAll('.rotulo-card');
+
+      if (isEdit) {
+        const old = document.getElementById(`rcard-${rotuloId}`);
+        if (old) old.replaceWith(buildRotuloCard(data.rotulo, old.dataset.idx || 0));
+      } else {
+        empty.style.display = 'none';
+        lista.appendChild(buildRotuloCard(data.rotulo, rotulos.length));
+      }
+    } else {
+      status.textContent = `❌ ${data.erro}`;
+    }
+  } catch(e) {
+    status.textContent = '❌ Erro de conexão.';
+  }
+}
+
+async function deletarRotulo(id) {
+  if (!confirm('Remover este rótulo?')) return;
+  try {
+    const resp = await fetch(`/produtos/${produtoIdArq}/rotulos/${id}/deletar`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.ok) {
+      document.getElementById(`rcard-${id}`)?.remove();
+      const lista = document.getElementById('rotulo-lista');
+      if (!lista.querySelector('.rotulo-card')) {
+        document.getElementById('rotulo-empty').style.display = '';
+      }
+      // Renumerar
+      lista.querySelectorAll('.rotulo-card .rcard-num').forEach((el, i) => el.textContent = `#${i+1}`);
+    }
+  } catch(e) { alert('Erro ao remover rótulo.'); }
+}
+
+function buildRotuloCard(r, idx) {
+  const card = document.createElement('div');
+  card.className = 'rotulo-card';
+  card.id = `rcard-${r.id}`;
+  card.dataset.idx = idx;
+
+  const badge = r.conteudoLiquido
+    ? `<span class="rcard-badge">${r.conteudoLiquido}${r.unidadeMedida ? ' '+r.unidadeMedida : ''}</span>`
+    : '';
+
+  let fieldsHtml = '';
+  if (r.cnpjFabricante)      fieldsHtml += `<div class="rcard-field"><span>CNPJ</span><p>${r.cnpjFabricante}</p></div>`;
+  if (r.servicoInspecao)     fieldsHtml += `<div class="rcard-field"><span>Inspeção</span><p>${r.servicoInspecao}</p></div>`;
+  if (r.condicoesConservacao) fieldsHtml += `<div class="rcard-field" style="grid-column:1/-1"><span>Conservação</span><p>${r.condicoesConservacao}</p></div>`;
+
+  let fotosHtml = '';
+  if (r.fotos && r.fotos.length > 0) {
+    fotosHtml = `<div class="rcard-fotos"><p class="rcard-fotos-label">Fotos do rótulo</p><div style="display:flex;flex-wrap:wrap;gap:.5rem;">`;
+    r.fotos.forEach(f => {
+      fotosHtml += `<div style="display:flex;align-items:center;gap:.4rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.3rem .5rem;">
+        <img src="/uploads/produtos/${f.nomeSalvo}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;"
+          onclick="abrirLightbox('/uploads/produtos/${f.nomeSalvo}')" title="${f.nomeOriginal}">
+        <span style="font-size:.75rem;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.nomeOriginal}</span>
+      </div>`;
+    });
+    fotosHtml += `</div></div>`;
+  }
+
+  card.innerHTML = `
+    <div class="rcard-header">
+      <div class="rcard-title">
+        <span class="rcard-num">#${parseInt(idx)+1}</span>
+        <strong>${r.fabricante || 'Sem fabricante'}</strong>
+        ${badge}
+      </div>
+      <div style="display:flex;gap:.4rem;">
+        <button class="btn btn-secondary btn-sm" onclick="abrirFormRotulo(${JSON.stringify(r).replace(/"/g,'&quot;')})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deletarRotulo(${r.id})">🗑️</button>
+      </div>
+    </div>
+    <div class="rcard-body">${fieldsHtml}</div>
+    ${fotosHtml}`;
+
+  return card;
 }
 
 /* ── Upload de arquivos ── */

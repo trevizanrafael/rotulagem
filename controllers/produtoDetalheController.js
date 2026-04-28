@@ -88,6 +88,22 @@ const getProdutoDetalhe = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
+    // Rótulos do produto (com fotos resolvidas)
+    const ProdutoRotulo = require('../models/ProdutoRotulo');
+    const rotulosDb = await ProdutoRotulo.findAll({
+      where: { produtoId: produto.id },
+      order: [['createdAt', 'ASC']],
+    });
+    // Resolve fotos de cada rótulo
+    const arquivoMap = {};
+    arquivos.forEach(a => { arquivoMap[a.id] = a.toJSON(); });
+    const rotulos = rotulosDb.map(r => {
+      const plain = r.toJSON();
+      const ids = Array.isArray(plain.fotosIds) ? plain.fotosIds : [];
+      plain.fotos = ids.map(id => arquivoMap[id]).filter(Boolean);
+      return plain;
+    });
+
     res.render('user/produto-detalhe', {
       username: req.session.username,
       produto,
@@ -95,6 +111,7 @@ const getProdutoDetalhe = async (req, res) => {
       respostasMap,
       categorias,
       arquivos,
+      rotulos,
       statusLabels: STATUS_LABELS,
       tab,
       sucesso: req.query.sucesso || null,
